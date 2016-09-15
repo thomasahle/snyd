@@ -13,6 +13,10 @@ else:
     DICE = int(sys.argv[1])
     SIDES = int(sys.argv[2])
 
+################################################################
+# Game definition
+################################################################
+
 CALLS = [(count, side)
         for count in range(1, 2*DICE+1)
         for side in range(SIDES)]
@@ -55,6 +59,11 @@ lxs = [h if len(h)%2==1 else h[:-1] for h in leafs]
 # Because we can nearly always call snyd,
 # the x leafs should be all the xs, but the root
 assert set(xs) - set(lxs) == set([()])
+
+
+################################################################
+# Write as matrix
+################################################################
 
 ids = defaultdict(lambda: len(ids))
 ids['l'] = 0
@@ -127,6 +136,15 @@ for d1 in ROLLS:
         print('Bounds', d1, d2)
         print(U)
 U = np.vstack(np.hstack(Uc for Uc in Ur) for Ur in Us)
+# Add requirement that we win more with higher rolls.
+# This makes strategies more believable, if possible.
+for i in range(len(ROLLS)-1):
+    lhs = np.zeros(var_cnt)
+    lhs[(i+1)*(1+x_cnt)] = 1
+    lhs[(i)*(1+x_cnt)] = -1
+    U = np.vstack((U, lhs))
+
+
 #np.set_printoptions(threshold=10**4)
 #print(U)
 
@@ -165,30 +183,61 @@ def scall(call):
         return "snyd"
     return '{}x{}'.format(*call)
 
+def findStateValue(d1, d2, hist):
+    ''' value and d1, d2 are relative to the current player '''
+    if hist and hist[-1] is SNYD:
+        return int(not is_correct_call(d1+d2, hist[-2]))*2-1
+    res = 0
+    for call in possible_calls(hist):
+        res += findCallProb(d1, d2, hist+(call,)) \
+             *-findStateValue(d2, d1, hist+(call,))
+    return res
+
+def findCallProb(d, hist):
+    if not hist:
+        return 1
+    if len(hist) % 2 == 1:
+        i = ROLLS.index(d)
+        xhis = res.x[i*(1+x_cnt) + ids[hist]]
+        xpar = res.x[i*(1+x_cnt) + ids[hist[:-2]]]
+        return xhis/xpar if xpar > 1e-10 else 0
+    else:
+        bestv = -1
+        best = []
+        for call in possible_calls(hist[:-1]):
+            # Nej, man er n'dt til at beregne hvad sandsynligheden for spiller 1s terninger er p[ dette sted.
+            P[d2 = D | pos] = P[d2=D]/P[pos] * P[pos | d2 = D]
+            v = sum(findStateValue(d, d2, hist[:-1]+(call,)) for d2 in ROLLS)/len(ROLLS)
+            if v > bestv:
+                best = []
+            if v >= bestv:
+                best.append(call)
+                bestv = v
+        if hist[-1] not in best:
+            return 0
+        return 1/len(best)
+
 print('Trees:')
 for i, d1 in enumerate(ROLLS):
-    print('Roll: {}, Value: {}'.format(d1, res.x[i*(1+x_cnt) + ids['l']]))
     prune = set()
     for hist in histories:
-       prob = 0
-       if hist in xs:
-            xhis = res.x[i*(1+x_cnt) + ids[hist]]
-            xpar = res.x[i*(1+x_cnt) + ids[hist[:-2]]]
-            prob = np.round(xhis/xpar, decimals=3) if xpar else 0
-            if prob == 0:
-                prune.add(hist)
-       if any(hist[:j] in prune for j in range(len(hist)+1)):
+        if not hist:
+            print('Roll: {}, Value: {}'.format(d1, res.x[i*(1+x_cnt) + ids['l']]))
             continue
-       print('|  '*len(hist), scall(hist[-1]) if hist else 'root', end=' ')
-       if prob:
-            print('p={}'.format(prob), end=' ')
-       #if hist:
-       #   if hist[-1] is SNYD:
-       #      if not is_correct_call((0,0), hist[-2]):
-       #         print('+', end='')
-       #   elif is_correct_call((0,0), hist[-1]):
-       #      print('+', end='')
-       print()
+        if any(hist[:j] in prune for j in range(len(hist)+1)):
+            continue
+        s = '|  '*len(hist) + (scall(hist[-1]) if hist else 'root')
+        if hist in xs:
+            prob = findCallProb(d1, ROLLS[0], hist)
+            prob = np.round(prob, decimals=4)
+            if hist in xs and prob == 0:
+                prune.add(hist)
+                continue
+            print('{} p={}'.format(s, prob))
+        else:
+            ps = [findCallProb(roll, d1, hist) for roll in ROLLS]
+            ps = [str(np.round(prob, decimals=4)) for prob in ps]
+            print('{} p=({})'.format(s, ' '.join(ps)))
 
 res.x[np.abs(res.x) < 1e-5] = 0
 res.x[res.x > 1-1e-5] = 1
@@ -198,3 +247,12 @@ print([res.x[i] for i in range(0, var_cnt, 1+x_cnt)])
 print('Cx', c.dot(res.x))
 print('Ux', U.dot(res.x))
 print('Ex', E.dot(res.x))
+
+totalValue = 0
+for d1 in ROLLS:
+    for d2 in ROLLS:
+        v = findStateValue(d1, d2, ())
+        print('Value of rolls {}, {}: {}'.format( d1, d2, v))
+        totalValue += v
+print('total value:', totalValue)
+

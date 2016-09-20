@@ -4,23 +4,42 @@ import itertools
 import sys
 from ortools.linear_solver import pywraplp
 import fractions
+from functools import lru_cache
 
-if len(sys.argv) != 3:
-    print('Run {} [dice] [sides]'.format(sys.argv[0]))
+
+if len(sys.argv) < 3:
+    print('Run {} [dice] [sides] mode'.format(sys.argv[0]))
     sys.exit()
 else:
     DICE = int(sys.argv[1])
     SIDES = int(sys.argv[2])
 
+NORMAL, JOKER, STAIRS = range(3)
+if len(sys.argv) >= 4:
+    mode = {'normal': NORMAL, 'joker': JOKER, 'stairs': STAIRS}[sys.argv[3]]
+else:
+    mode = NORMAL
+
 ################################################################
 # Game definition
 ################################################################
 
-CALLS = [(count, side)
+if mode == NORMAL:
+    CALLS = [(count, side)
+            for count in range(1, 2*DICE+1)
+            for side in range(1, SIDES+1)]
+if mode == JOKER:
+    # With jokers we can't call 1
+    CALLS = [(count, side)
         for count in range(1, 2*DICE+1)
-        for side in range(SIDES)]
+        for side in range(2, SIDES+1)]
+if mode == STAIRS:
+    # With stairs we can call up to four sixes...
+    CALLS = [(count, side)
+        for count in range(1, 4*DICE+1)
+        for side in range(2, SIDES+1)]
 
-ROLLS = list(itertools.product(range(SIDES), repeat=DICE))
+ROLLS = list(itertools.product(range(1,SIDES+1), repeat=DICE))
 
 SNYD = None
 
@@ -31,9 +50,17 @@ def possible_calls(hist):
         return []
     return [call for call in CALLS if call > hist[-1]] + [SNYD]
 
-def is_correct_call(ds, call):
+def is_correct_call(d1, d2, call):
     count, side = call
-    return not bool(Counter({side: count}) - Counter(ds))
+    if mode == JOKER:
+        d1 = tuple(side if d == 1 else d for d in d1)
+        d2 = tuple(side if d == 1 else d for d in d2)
+    if mode == STAIRS:
+        if d1 == tuple(range(1,len(d1)+1)):
+            d1 = (side,)*(len(d1)+1)
+        if d2 == tuple(range(1,len(d2)+1)):
+            d2 = (side,)*(len(d2)+1)
+    return not bool(Counter({side: count}) - Counter(d1 + d2))
 
 def is_leaf(hist):
     assert not hist or hist[0] is not SNYD, "SNYD can't be first call"
@@ -44,7 +71,9 @@ def histories(hist=()):
     if not is_leaf(hist):
         for call in possible_calls(hist):
             yield from histories(hist+(call,))
+dfs = list(histories())
 histories = list(histories())
+histories.sort(key = len)
 
 leafs = [hist for hist in histories if is_leaf(hist)]
 non_leafs = [hist for hist in histories if not is_leaf(hist)]
@@ -61,15 +90,15 @@ leaf_ys = [h for h in ys if is_leaf(h)]
 inner_xs = [h for h in xs if not is_leaf(h)]
 inner_ys = [h for h in ys if not is_leaf(h)]
 
-def score(ds, hist):
+def score(d1, d2, hist):
     ''' Get the score in {-1,1} relative to player 1 '''
     assert hist and hist[-1] is SNYD
     # Player 2 called snyd
     if len(hist) % 2 == 0:
-        res = is_correct_call(ds, hist[-2])
+        res = is_correct_call(d1, d2, hist[-2])
     # Player 1 called snyd
     else:
-        res = not is_correct_call(ds, hist[-2])
+        res = not is_correct_call(d1, d2, hist[-2])
     return int(res)*2 - 1
 
 ################################################################
@@ -79,6 +108,7 @@ def score(ds, hist):
 def initSolver():
     solver = pywraplp.Solver('', pywraplp.Solver.GLOP_LINEAR_PROGRAMMING)
     zvs = {(d,x): solver.NumVar(-solver.infinity(), solver.infinity(),
+    #zvs = {(d,x): solver.NumVar(-10, 10,
         'z{}h{}'.format(d[0],shist(x))) for x in inner_xs for d in ROLLS}
     xvs = {(d,x): solver.NumVar(0, 1,
         'x{}h{}'.format(d[0],shist(x))) for x in xs for d in ROLLS}
@@ -95,42 +125,72 @@ def initSolver():
     # A^T: (d1,x) -> (d2,y)
     # |z| : d2*x_inner
 
+    # A simple strategy
+    #simp = {(d1,x): 0 for d1 in ROLLS for x in xs}
+    #for d1 in ROLLS:
+    #    simp[d1,()] = 1
+    #    for y in inner_ys:
+    #        call = possible_calls(y)[0]
+    #        simp[d1, y+(call,)] = simp[d1, y[:-1]]
+    #print(simp)
+
+
+
     # Equalities: Ex = e
-    print('Equalities')
+    #print('Equalities')
     for d1 in ROLLS:
-        print('Roll', d1)
+        #print('Roll', d1)
         # The root sums to 1
         constraint = solver.Constraint(1, 1)
         constraint.SetCoefficient(xvs[d1,()], 1)
-        print('1 =', xvs[d1,()].name())
+        #print('1 =', xvs[d1,()].name())
+        #print('1 =', simp[d1,()])
         # Make siblings sum to their parent
         for hist in inner_ys:
             constraint = solver.Constraint(0, 0)
-            print('0 =', end=' ')
-            constraint.SetCoefficient(xvs[d1,hist[:-1]], -1)
-            print('-', xvs[d1,hist[:-1]].name(), end=' ')
+            #print('0 =', end=' ')
+            constraint.SetCoefficient(xvs[d1,hist[:-1]], 1)
+            #print(xvs[d1,hist[:-1]].name(), end=' ')
+            #print(simp[d1,hist[:-1]], end=' ')
             for call in possible_calls(hist):
-                print('+', xvs[d1,hist+(call,)].name(), end=' ')
-                constraint.SetCoefficient(xvs[d1,hist+(call,)], 1)
-            print()
+                #print('-', xvs[d1,hist+(call,)].name(), end=' ')
+                #print('-', simp[d1,hist+(call,)], end=' ')
+                constraint.SetCoefficient(xvs[d1,hist+(call,)], -1)
+            #print()
+
+    #F = np.zeros((len(inner_xs)+1, len(ys)))
+    #for i, x in enumerate(inner_xs):
+    #    if x == ():
+    #        F[i, ys.index(())] = 1
+    #    else:
+    #        F[i, ys.index(x[:-1])] = 1
+    #        for call in possible_calls(x):
+    #            F[i, ys.index(x+(call,))] = -1
+    #print(F)
+    #print(F.T)
 
     # F and A must have equal number of collumns
     # This is true, they both have ROLLS x ys
 
-    # Bound F.T@z - A.Tx >= 0
+    # Bound zT@F - xT@A <= 0
+    # Bound F.T@z - A.Tx <= 0
     # z@F0 - x@A0 >= 0, ...
-    print('Bounds')
+    #print('Bounds')
     for d2 in ROLLS:
-        print('Roll', d2)
+        #print('Roll', d2)
         # Now the leafs
         for hist in ys:
             constraint = solver.Constraint(-solver.infinity(), 0)
-            print('0 >= ', end='')
+            #print('0 >= ', end='')
             if hist == ():
                 # We have to take care of the root as well
                 # z@F:0
-                print(zvs[d2,()].name())
+                #print(zvs[d2,()].name(), end=' ')
                 constraint.SetCoefficient(zvs[d2,()], 1)
+                for call in possible_calls(hist):
+                    #print('+', zvs[d2,hist+(call,)].name(), end=' ')
+                    constraint.SetCoefficient(zvs[d2,hist+(call,)], 1)
+                #print()
                 # A:0 is simply empty
                 pass
                 continue
@@ -138,21 +198,22 @@ def initSolver():
             # I'm a y. To which internals am I a child, to which a parent?
             # We may not have any children, that's fine. If we are a leaf,
             # F will only have +1 entries for us.
-            print(zvs[d2,hist[:-1]].name(), end=' ')
-            constraint.SetCoefficient(zvs[d2,hist[:-1]], 1)
+            #print('-', zvs[d2,hist[:-1]].name(), end=' ')
+            constraint.SetCoefficient(zvs[d2,hist[:-1]], -1)
             for call in possible_calls(hist):
                 child = hist+(call,)
                 if not is_leaf(child):
-                    print('-', zvs[d2,child].name(), end=' ')
-                    constraint.SetCoefficient(zvs[d2,child], -1)
+                    #print('+', zvs[d2,child].name(), end=' ')
+                    constraint.SetCoefficient(zvs[d2,child], 1)
             # -x@A:i
             lhist = hist+(SNYD,) if hist[-1] is not SNYD else hist
             xhist = hist+(SNYD,) if hist[-1] is not SNYD else hist[:-1]
             for d1 in ROLLS:
-                sign = '-' if -score(d1+d2, lhist) < 0 else '+'
-                print(sign, xvs[d1,xhist].name(), end=' ')
-                constraint.SetCoefficient(xvs[d1,xhist], -score(d1+d2, lhist))
-            print()
+                sign = '-' if -score(d1, d2, lhist) < 0 else '+'
+                #print(sign, xvs[d1,xhist].name(), end=' ')
+                #print(sign, simp[d1,xhist], end=' ')
+                constraint.SetCoefficient(xvs[d1,xhist], -score(d1, d2, lhist))
+            #print()
 
     return solver, xvs, zvs
 
@@ -165,10 +226,14 @@ def scall(call):
 def shist(hist):
     return ','.join(map(scall,hist))
 
+def sfrac(val):
+    return str(fractions.Fraction.from_float(val).limit_denominator())
+
 class CounterStrategy:
     def __init__(self, xvs):
         self.xvs = xvs
 
+    @lru_cache()
     def findCallProb(self, d1, hist):
         ''' Return the probability that player 1 did the last move of hist '''
         assert len(hist) % 2 == 1
@@ -176,6 +241,7 @@ class CounterStrategy:
         xpar = self.xvs[d1, hist[:-2]].solution_value()
         return xhis/xpar if xpar > 1e-10 else 0
 
+    @lru_cache()
     def findP2Call(self, d2, hist):
         ''' Find the best call for p2, choosing the optimal deterministic counter strategy '''
         assert len(hist) % 2 == 1
@@ -191,10 +257,11 @@ class CounterStrategy:
         return min(possible_calls(hist), key=lambda call:
                 sum(p*self.stateValue(d1, d2, hist+(call,)) for p, d1 in zip(pd1s,ROLLS)))
 
+    @lru_cache()
     def stateValue(self, d1, d2, hist):
         ''' Return expected payoff for player 1 '''
         if hist and hist[-1] is SNYD:
-            res = score(d1+d2, hist)
+            res = score(d1, d2, hist)
         # Player 1
         elif len(hist) % 2 == 0:
             res = sum(self.stateValue(d1, d2, hist+(call,))
@@ -207,6 +274,7 @@ class CounterStrategy:
         #print('stateValue({}, {}, {}) = {}'.format(d1, d2, hist, res))
         return res
 
+    @lru_cache()
     def estimateP1Rolls(self, hist):
         assert len(hist) % 2 == 1
         # Simple bayes
@@ -215,23 +283,14 @@ class CounterStrategy:
             return [1/len(ROLLS) for _ in ROLLS]
         return [p/sum(prob_hist_given_d) for p in prob_hist_given_d]
 
-def main():
-    # Solve the system
-    solver, xvs, zvs = initSolver()
-    status = solver.Solve()
-    if status != solver.OPTIMAL:
-        print('Status:', status)
-        print(zvs[(0,),()].solution_value())
-        return
-
+def printTrees(cs):
     print('Trees:')
-    cs = CounterStrategy(xvs)
     for d1 in ROLLS:
-        for hist in histories:
+        for hist in dfs:
             # At root, print the roll value
             if not hist:
-                avgValue = sum(cs.stateValue(d1, d2, ()) for d2 in ROLLS)/len(ROLLS)
-                values = [round(cs.stateValue(d1, d2, ()), ndigits=4) for d2 in ROLLS]
+                avgValue = sfrac(sum(cs.stateValue(d1, d2, ()) for d2 in ROLLS)/len(ROLLS))
+                values = ', '.join(sfrac(cs.stateValue(d1, d2, ())) for d2 in ROLLS)
                 print('Roll: {}, Expected: {}, Values: {}'.format(d1, avgValue, values))
                 continue
             # If a parent has zero probability, don't go there
@@ -239,12 +298,25 @@ def main():
                 continue
             s = '|  '*len(hist) + (scall(hist[-1]) if hist else 'root')
             if hist in xs:
-                prob = round(cs.findCallProb(d1, hist), ndigits=4)
+                prob = sfrac(cs.findCallProb(d1, hist))
                 print('{} p={}'.format(s, prob))
             else:
                 tag = ''.join('_*'[hist[-1] == cs.findP2Call(d2,hist[:-1])]
                         for d2 in ROLLS)
                 print(s, tag)
+def main():
+    print('Setting up linear program')
+    solver, xvs, zvs = initSolver()
+
+    print('Solving')
+    status = solver.Solve()
+    if status != solver.OPTIMAL:
+        print('Status:', status)
+        print(zvs[(0,),()].solution_value())
+        return
+
+    cs = CounterStrategy(xvs)
+    #printTrees(cs)
 
     # Test feasability
     #print('Score by d2')
@@ -252,15 +324,19 @@ def main():
     #    expected_score = sum(stateValue(d1, d2, ()) for d1 in ROLLS)/len(ROLLS)
     #    print('{} strat {} >= lambda {}'.format(d2, expected_score, lvs[d2].solution_value()))
 
-    print('Zs', ', '.join(str(zv.solution_value()) for zv in zvs.values()))
+    #print('Zs', ', '.join(str(zv.solution_value()) for zv in zvs.values()))
     #print('Zs', ', '.join(sorted('{}x{}: {}'.format(d2, xinner, zv.solution_value()) for (d2, xinner), zv in zvs.items())))
-    print('Xs', ', '.join(str(xv.solution_value()) for xv in xvs.values()))
+    #for (d1, x), xv in sorted(xvs.items(), key=
+    #        lambda a:(a[0][0], len(a[0][1]), str(a))):
+    #    print(d1, x, xv.solution_value())
+    #print('Xs', ', '.join(str(xv.solution_value()) for xv in xvs.values()))
 
     res = sum(zv.solution_value() for (_, hist), zv in zvs.items() if hist == ())
-    print('Value:', fractions.Fraction.from_float(res).limit_denominator())
+    res /= len(ROLLS)**2
+    print('Value:', sfrac(res))
 
     res2 = sum(cs.stateValue(d1, d2, ()) for d1 in ROLLS for d2 in ROLLS)/len(ROLLS)**2
-    print('Score:', fractions.Fraction.from_float(res2).limit_denominator())
+    print('Score:', sfrac(res2))
 
 if __name__ == '__main__':
     main()

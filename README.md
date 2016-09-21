@@ -25,8 +25,8 @@ The 'joker' version, in which a 1 participates towards any call, the game turns 
 | 1 	| 1      	| -       	| -       	|
 | 2 	| 1/4     | 1      	|       	|
 | 3 	| 1/9   	| 1/3    	|      	|
-| 4 	|    	|       	|       	|
-| 5 	|   	|       	|    	|
+| 4 	| 345/1696   	|  1/4     	|       	|
+| 5 	| 2128/8375  	| 34/125      	|    	|
 | 6 	|    	|  	|        	|
 
 In this table, the first player has two dice, version the second player who has only one dice.
@@ -37,8 +37,8 @@ As expected this improves the expected score, however it also increases the size
 | 1 	| 1      	| -       	| -       	|
 | 2 	| 0     | 1      	|       	|
 | 3 	| -1/27   	| -1/27    	|      	|
-| 4 	|    	|       	|       	|
-| 5 	|   	|       	|    	|
+| 4 	| -1/8   	| -1/32      	|       	|
+| 5 	| -27/125  	| -3/125      	|    	|
 | 6 	|    	|  	|        	|
 
 # Running the code

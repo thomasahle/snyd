@@ -7,16 +7,17 @@ import fractions
 from functools import lru_cache
 
 
-if len(sys.argv) < 3:
-    print('Run {} [dice] [sides] mode'.format(sys.argv[0]))
+if len(sys.argv) < 4:
+    print('Run {} [dice1] [dice2] [sides] mode'.format(sys.argv[0]))
     sys.exit()
 else:
-    DICE = int(sys.argv[1])
-    SIDES = int(sys.argv[2])
+    DICE1 = int(sys.argv[1])
+    DICE2 = int(sys.argv[2])
+    SIDES = int(sys.argv[3])
 
 NORMAL, JOKER, STAIRS = range(3)
-if len(sys.argv) >= 4:
-    mode = {'normal': NORMAL, 'joker': JOKER, 'stairs': STAIRS}[sys.argv[3]]
+if len(sys.argv) >= 5:
+    mode = {'normal': NORMAL, 'joker': JOKER, 'stairs': STAIRS}[sys.argv[4]]
 else:
     mode = NORMAL
 
@@ -26,20 +27,21 @@ else:
 
 if mode == NORMAL:
     CALLS = [(count, side)
-            for count in range(1, 2*DICE+1)
+            for count in range(1, DICE1+DICE2+1)
             for side in range(1, SIDES+1)]
 if mode == JOKER:
     # With jokers we can't call 1
     CALLS = [(count, side)
-        for count in range(1, 2*DICE+1)
+        for count in range(1, DICE1+DICE2+1)
         for side in range(2, SIDES+1)]
 if mode == STAIRS:
     # With stairs we can call up to four sixes...
     CALLS = [(count, side)
-        for count in range(1, 4*DICE+1)
+        for count in range(1, 2*(DICE1+DICE2)+1)
         for side in range(2, SIDES+1)]
 
-ROLLS = list(itertools.product(range(1,SIDES+1), repeat=DICE))
+ROLLS1 = list(itertools.product(range(1,SIDES+1), repeat=DICE1))
+ROLLS2 = list(itertools.product(range(1,SIDES+1), repeat=DICE2))
 
 SNYD = None
 
@@ -83,9 +85,6 @@ non_leafs = [hist for hist in histories if not is_leaf(hist)]
 # This is of course game specific, so maybe it's a bad way to do it...
 xs = [h for h in histories if not h or len(h)%2==1]
 ys = [h for h in histories if not h or len(h)%2==0]
-# The leafs are those with no children.
-leaf_xs = [h for h in xs if is_leaf(h)]
-leaf_ys = [h for h in ys if is_leaf(h)]
 # The inners are those with children. Note the root is present in both.
 inner_xs = [h for h in xs if not is_leaf(h)]
 inner_ys = [h for h in ys if not is_leaf(h)]
@@ -107,15 +106,14 @@ def score(d1, d2, hist):
 
 def initSolver():
     solver = pywraplp.Solver('', pywraplp.Solver.GLOP_LINEAR_PROGRAMMING)
-    zvs = {(d,x): solver.NumVar(-solver.infinity(), solver.infinity(),
-    #zvs = {(d,x): solver.NumVar(-10, 10,
-        'z{}h{}'.format(d[0],shist(x))) for x in inner_xs for d in ROLLS}
-    xvs = {(d,x): solver.NumVar(0, 1,
-        'x{}h{}'.format(d[0],shist(x))) for x in xs for d in ROLLS}
+    zvs = {(d2,x): solver.NumVar(-solver.infinity(), solver.infinity(),
+        'z{}h{}'.format(d2,shist(x))) for x in inner_xs for d2 in ROLLS2}
+    xvs = {(d1,x): solver.NumVar(0, 1,
+        'x{}h{}'.format(d1,shist(x))) for x in xs for d1 in ROLLS1}
 
     # The thing to maximize: f.T@z
     objective = solver.Objective()
-    for d2 in ROLLS:
+    for d2 in ROLLS2:
         objective.SetCoefficient(zvs[d2,()], 1)
     objective.SetMaximization()
 
@@ -138,7 +136,7 @@ def initSolver():
 
     # Equalities: Ex = e
     #print('Equalities')
-    for d1 in ROLLS:
+    for d1 in ROLLS1:
         #print('Roll', d1)
         # The root sums to 1
         constraint = solver.Constraint(1, 1)
@@ -176,7 +174,7 @@ def initSolver():
     # Bound F.T@z - A.Tx <= 0
     # z@F0 - x@A0 >= 0, ...
     #print('Bounds')
-    for d2 in ROLLS:
+    for d2 in ROLLS2:
         #print('Roll', d2)
         # Now the leafs
         for hist in ys:
@@ -208,7 +206,7 @@ def initSolver():
             # -x@A:i
             lhist = hist+(SNYD,) if hist[-1] is not SNYD else hist
             xhist = hist+(SNYD,) if hist[-1] is not SNYD else hist[:-1]
-            for d1 in ROLLS:
+            for d1 in ROLLS1:
                 sign = '-' if -score(d1, d2, lhist) < 0 else '+'
                 #print(sign, xvs[d1,xhist].name(), end=' ')
                 #print(sign, simp[d1,xhist], end=' ')
@@ -245,7 +243,7 @@ class CounterStrategy:
     def findP2Call(self, d2, hist):
         ''' Find the best call for p2, choosing the optimal deterministic counter strategy '''
         assert len(hist) % 2 == 1
-        if sum(self.findCallProb(d1,hist) for d1 in ROLLS) < 1e-6:
+        if sum(self.findCallProb(d1,hist) for d1 in ROLLS1) < 1e-6:
             #if d2 == (0,) and hist == ((1,1),):
             #    print('findP2Call called on impossible history')
             return possible_calls(hist)[0]
@@ -255,7 +253,7 @@ class CounterStrategy:
             #print('pd1s', pd1s)
             #print('scores', [sum(p*stateValue(d1, d2, hist+(call,)) for p, d1 in zip(pd1s,ROLLS)) for p,d1 in zip(pd1s,ROLLS)])
         return min(possible_calls(hist), key=lambda call:
-                sum(p*self.stateValue(d1, d2, hist+(call,)) for p, d1 in zip(pd1s,ROLLS)))
+                sum(p*self.stateValue(d1, d2, hist+(call,)) for p, d1 in zip(pd1s,ROLLS1)))
 
     @lru_cache()
     def stateValue(self, d1, d2, hist):
@@ -278,19 +276,19 @@ class CounterStrategy:
     def estimateP1Rolls(self, hist):
         assert len(hist) % 2 == 1
         # Simple bayes
-        prob_hist_given_d = [self.findCallProb(d1, hist) for d1 in ROLLS]
+        prob_hist_given_d = [self.findCallProb(d1, hist) for d1 in ROLLS1]
         if sum(prob_hist_given_d) < 1e-10:
-            return [1/len(ROLLS) for _ in ROLLS]
+            return [1/len(ROLLS1) for _ in ROLLS1]
         return [p/sum(prob_hist_given_d) for p in prob_hist_given_d]
 
 def printTrees(cs):
     print('Trees:')
-    for d1 in ROLLS:
+    for d1 in ROLLS1:
         for hist in dfs:
             # At root, print the roll value
             if not hist:
-                avgValue = sfrac(sum(cs.stateValue(d1, d2, ()) for d2 in ROLLS)/len(ROLLS))
-                values = ', '.join(sfrac(cs.stateValue(d1, d2, ())) for d2 in ROLLS)
+                avgValue = sfrac(sum(cs.stateValue(d1, d2, ()) for d2 in ROLLS2)/len(ROLLS2))
+                values = ', '.join(sfrac(cs.stateValue(d1, d2, ())) for d2 in ROLLS2)
                 print('Roll: {}, Expected: {}, Values: {}'.format(d1, avgValue, values))
                 continue
             # If a parent has zero probability, don't go there
@@ -302,7 +300,7 @@ def printTrees(cs):
                 print('{} p={}'.format(s, prob))
             else:
                 tag = ''.join('_*'[hist[-1] == cs.findP2Call(d2,hist[:-1])]
-                        for d2 in ROLLS)
+                        for d2 in ROLLS2)
                 print(s, tag)
 def main():
     print('Setting up linear program')
@@ -332,10 +330,10 @@ def main():
     #print('Xs', ', '.join(str(xv.solution_value()) for xv in xvs.values()))
 
     res = sum(zv.solution_value() for (_, hist), zv in zvs.items() if hist == ())
-    res /= len(ROLLS)**2
+    res /= len(ROLLS1)*len(ROLLS2)
     print('Value:', sfrac(res))
 
-    res2 = sum(cs.stateValue(d1, d2, ()) for d1 in ROLLS for d2 in ROLLS)/len(ROLLS)**2
+    res2 = sum(cs.stateValue(d1, d2, ()) for d1 in ROLLS1 for d2 in ROLLS2)/len(ROLLS1)/len(ROLLS2)
     print('Score:', sfrac(res2))
 
 if __name__ == '__main__':

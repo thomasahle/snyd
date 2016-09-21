@@ -1,0 +1,59 @@
+Setting up linear program
+Solving
+Trees:
+Roll: (1,), Expected: -1, Values: -1, -1, -1, -1
+|  13 p=1
+|  |  14 ****
+|  |  |  24 p=1
+|  |  |  |  snyd ****
+|  |  21 ____
+|  |  |  24 p=1
+|  |  |  |  snyd ****
+|  |  22 ____
+|  |  |  24 p=1
+|  |  |  |  snyd ****
+|  |  23 ____
+|  |  |  snyd p=1
+|  |  24 ____
+|  |  |  snyd p=1
+|  |  snyd ____
+Roll: (2,), Expected: -1, Values: -1, -1, -1, -1
+|  14 p=1
+|  |  21 ****
+|  |  |  24 p=1
+|  |  |  |  snyd ****
+|  |  22 ____
+|  |  |  snyd p=1
+|  |  23 ____
+|  |  |  24 p=1
+|  |  |  |  snyd ****
+|  |  24 ____
+|  |  |  snyd p=1
+|  |  snyd ____
+Roll: (3,), Expected: 1/2, Values: 1, 1, 1, -1
+|  13 p=1
+|  |  14 ****
+|  |  |  snyd p=1
+|  |  21 ____
+|  |  |  snyd p=1
+|  |  22 ____
+|  |  |  snyd p=1
+|  |  23 ____
+|  |  |  24 p=1
+|  |  |  |  snyd ****
+|  |  24 ____
+|  |  |  snyd p=1
+|  |  snyd ____
+Roll: (4,), Expected: 1, Values: 1, 1, 1, 1
+|  14 p=1
+|  |  21 ****
+|  |  |  snyd p=1
+|  |  22 ____
+|  |  |  snyd p=1
+|  |  23 ____
+|  |  |  snyd p=1
+|  |  24 ____
+|  |  |  snyd p=1
+|  |  snyd ____
+Value: -1/8
+Score: -1/8

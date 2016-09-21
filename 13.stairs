@@ -1,0 +1,41 @@
+Setting up linear program
+Solving
+Trees:
+Roll: (1,), Expected: 1/3, Values: 1, 1, -1
+|  23 p=1
+|  |  32 *_*
+|  |  |  43 p=1
+|  |  |  |  snyd ***
+|  |  33 ___
+|  |  |  43 p=1
+|  |  |  |  snyd ***
+|  |  42 ___
+|  |  |  43 p=1
+|  |  |  |  snyd ***
+|  |  43 ___
+|  |  |  snyd p=1
+|  |  snyd _*_
+Roll: (2,), Expected: -1/3, Values: -1, -1, 1
+|  23 p=1
+|  |  32 *_*
+|  |  |  snyd p=1
+|  |  33 ___
+|  |  |  snyd p=1
+|  |  42 ___
+|  |  |  snyd p=1
+|  |  43 ___
+|  |  |  snyd p=1
+|  |  snyd _*_
+Roll: (3,), Expected: 1/3, Values: 1, -1, 1
+|  23 p=1
+|  |  32 *_*
+|  |  |  snyd p=1
+|  |  33 ___
+|  |  |  snyd p=1
+|  |  42 ___
+|  |  |  snyd p=1
+|  |  43 ___
+|  |  |  snyd p=1
+|  |  snyd _*_
+Value: 1/9
+Score: 1/9

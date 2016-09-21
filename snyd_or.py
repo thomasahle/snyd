@@ -316,7 +316,7 @@ def main():
         return
 
     cs = CounterStrategy(xvs)
-    #printTrees(cs)
+    printTrees(cs)
 
     # Test feasability
     #print('Score by d2')

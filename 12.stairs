@@ -1,0 +1,15 @@
+Setting up linear program
+Solving
+Trees:
+Roll: (1,), Expected: 0, Values: -1, 1
+|  32 p=1
+|  |  42 *_
+|  |  |  snyd p=1
+|  |  snyd _*
+Roll: (2,), Expected: 0, Values: 1, -1
+|  32 p=1
+|  |  42 *_
+|  |  |  snyd p=1
+|  |  snyd _*
+Value: 0
+Score: 0

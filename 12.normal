@@ -1,0 +1,13 @@
+Setting up linear program
+Solving
+Trees:
+Roll: (1,), Expected: 0, Values: 1, -1
+|  21 p=1
+|  |  22 *_
+|  |  |  snyd p=1
+|  |  snyd _*
+Roll: (2,), Expected: 0, Values: -1, 1
+|  22 p=1
+|  |  snyd **
+Value: 0
+Score: 0

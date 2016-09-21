@@ -4,6 +4,7 @@ This project analyses the two player end game of [Liar's Dice](https://en.wikipe
 using the theory of games with [Imperfect information](https://en.wikipedia.org/wiki/Perfect_information).
 The Nash equilibrium is found by the method of [Daphne Koller and Nimrod Megiddo](http://www.sciencedirect.com/science/article/pii/089982569290035Q)
 which reduces the game to a linear program of size polynomial in the number of states or "information sets".
+The linear programs are solved using the Glop solver from [Google or-tools](https://developers.google.com/optimization/).
 
 |      	| Normal 	| Joker  	| Stairs 	|
 |------	|--------	|--------	|--------	|
@@ -40,3 +41,10 @@ Roll: (1,), Expected: -1, Values: -1, -1, -1, -1, -1, -1
 Value: -1/9
 Score: -1/9
 ```
+
+# Future work
+While the values calculated should be correct, the strategies output by the program are not necessarily optimal in all meanings of the word.
+In particular they don't try to take advantage of misplays by the opposing player, but are happy to 'give back' an advantage to simply achieve the equilibrium value.
+Peter Bro Miltersen and Troels Bjerre Sørensen deals with this problem in http://dl.acm.org/citation.cfm?id=1109570 .
+
+It would also be interesting to improve the performance of the linear-program generator, so we might analyze end games with more than two dice.

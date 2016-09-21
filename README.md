@@ -13,12 +13,16 @@ The linear programs are solved using the Glop solver from [Google or-tools](http
 | 3 	| -1/9   	| 1/3    	| 1/9    	|
 | 4 	| -1/8   	| 0      	| 0      	|
 | 5 	| -3/35  	| 0      	| 1/25   	|
-| 6 	| -1/9   	| -7/327 	|        	|
+| 6 	| -1/9   	| -7/327 	| 0     	|
 
 In the table above, the rows corespond to the number of sides on the dice of the players.
 Scores are set as 1 when the first player to moves wins and -1 if player 2 wins.
 For the 'normal' version of Liar's Dice with one six-sided die for each player, we get the expected score -1/9.
 The 'joker' version, in which a 1 participates towards any call, the game turns out to be better balanced.
+
+It's interesting to note, that the game is perfectly balanced when the 'staircase' rule is included.
+With this rule, rolling a perfect permutation `⚀, 2, ..., k` is the same as rolling `k+1` jokers.
+Notably for the above table, the roll of a single ⚀ now counts as 2 of any kind.
 
 | 2v1	| Normal 	| Joker  	| Stairs 	|
 |----	|--------	|--------	|--------	|

@@ -231,7 +231,7 @@ class CounterStrategy:
     def __init__(self, xvs):
         self.xvs = xvs
 
-    @lru_cache()
+    @lru_cache(maxsize=10**5)
     def findCallProb(self, d1, hist):
         ''' Return the probability that player 1 did the last move of hist '''
         assert len(hist) % 2 == 1
@@ -239,7 +239,7 @@ class CounterStrategy:
         xpar = self.xvs[d1, hist[:-2]].solution_value()
         return xhis/xpar if xpar > 1e-10 else 0
 
-    @lru_cache()
+    @lru_cache(maxsize=10**5)
     def findP2Call(self, d2, hist):
         ''' Find the best call for p2, choosing the optimal deterministic counter strategy '''
         assert len(hist) % 2 == 1
@@ -255,7 +255,7 @@ class CounterStrategy:
         return min(possible_calls(hist), key=lambda call:
                 sum(p*self.stateValue(d1, d2, hist+(call,)) for p, d1 in zip(pd1s,ROLLS1)))
 
-    @lru_cache()
+    @lru_cache(maxsize=10**5)
     def stateValue(self, d1, d2, hist):
         ''' Return expected payoff for player 1 '''
         if hist and hist[-1] is SNYD:
@@ -272,7 +272,7 @@ class CounterStrategy:
         #print('stateValue({}, {}, {}) = {}'.format(d1, d2, hist, res))
         return res
 
-    @lru_cache()
+    @lru_cache(maxsize=10**5)
     def estimateP1Rolls(self, hist):
         assert len(hist) % 2 == 1
         # Simple bayes

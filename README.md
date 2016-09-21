@@ -6,25 +6,46 @@ The Nash equilibrium is found by the method of [Daphne Koller and Nimrod Megiddo
 which reduces the game to a linear program of size polynomial in the number of states or "information sets".
 The linear programs are solved using the Glop solver from [Google or-tools](https://developers.google.com/optimization/).
 
-|      	| Normal 	| Joker  	| Stairs 	|
-|------	|--------	|--------	|--------	|
-| 1, 1 	| 1      	|        	|        	|
-| 2, 2 	| 0      	| 1      	| 0      	|
-| 3, 3 	| -1/9   	| 1/3    	| 1/9    	|
-| 4, 4 	| -1/8   	| 0      	| 0      	|
-| 5, 5 	| -3/35  	| 0      	| 1/25   	|
-| 6, 6 	| -1/9   	| -7/327 	|        	|
+| 1v1	| Normal 	| Joker  	| Stairs 	|
+|----	|--------	|--------	|--------	|
+| 1 	| 1      	| -      	| -      	|
+| 2 	| 0      	| 1      	| 0      	|
+| 3 	| -1/9   	| 1/3    	| 1/9    	|
+| 4 	| -1/8   	| 0      	| 0      	|
+| 5 	| -3/35  	| 0      	| 1/25   	|
+| 6 	| -1/9   	| -7/327 	|        	|
 
 In the table above, the rows corespond to the number of sides on the dice of the players.
 Scores are set as 1 when the first player to moves wins and -1 if player 2 wins.
 For the 'normal' version of Liar's Dice with one six-sided die for each player, we get the expected score -1/9.
 The 'joker' version, in which a 1 participates towards any call, the game turns out to be better balanced.
 
+| 2v1	| Normal 	| Joker  	| Stairs 	|
+|----	|--------	|--------	|--------	|
+| 1 	| 1      	| -       	| -       	|
+| 2 	| 1/4     | 1      	|       	|
+| 3 	| 1/9   	| 1/3    	|      	|
+| 4 	|    	|       	|       	|
+| 5 	|   	|       	|    	|
+| 6 	|    	|  	|        	|
+
+In this table, the first player has two dice, version the second player who has only one dice.
+As expected this improves the expected score, however it also increases the size of the linear program, and thus the table is not complete.
+
+| 1v2	| Normal 	| Joker  	| Stairs 	|
+|----	|--------	|--------	|--------	|
+| 1 	| 1      	| -       	| -       	|
+| 2 	| 0     | 1      	|       	|
+| 3 	| -1/27   	| -1/27    	|      	|
+| 4 	|    	|       	|       	|
+| 5 	|   	|       	|    	|
+| 6 	|    	|  	|        	|
+
 # Running the code
 
 ```
 $ pip install py3-ortools
-$ python3 snyd_or.py 1 6 normal
+$ python3 snyd_or.py 1 1 6 normal
 Setting up linear program
 Solving
 Trees:

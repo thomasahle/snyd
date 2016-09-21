@@ -29,8 +29,8 @@ Notably for the above table, the roll of a single ⚀ now counts as 2 of any kin
 | 2v1	| Normal 	| Joker  	| Stairs 	|
 |----	|--------	|--------	|--------	|
 | 1 	| 1      	| -       	| -       	|
-| 2 	| 1/4     | 1      	|       	|
-| 3 	| 1/9   	| 1/3    	|      	|
+| 2 	| 1/4     | 1      	|  3/8     	|
+| 3 	| 1/9   	| 1/3    	| 1/27     	|
 | 4 	| 345/1696   	|  1/4     	|       	|
 | 5 	| 2128/8375  	| 34/125      	|    	|
 | 6 	|    	|  	|        	|
@@ -41,8 +41,8 @@ As expected this improves the expected score, however it also increases the size
 | 1v2	| Normal 	| Joker  	| Stairs 	|
 |----	|--------	|--------	|--------	|
 | 1 	| 1      	| -       	| -       	|
-| 2 	| 0     | 1      	|       	|
-| 3 	| -1/27   	| -1/27    	|      	|
+| 2 	| 0     | 1      	| -1/4      	|
+| 3 	| -1/27   	| -1/27    	| -1/27     	|
 | 4 	| -1/8   	| -1/32      	|       	|
 | 5 	| -27/125  	| -3/125      	|    	|
 | 6 	|    	|  	|        	|

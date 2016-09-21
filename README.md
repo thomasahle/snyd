@@ -1,10 +1,12 @@
-# An analysis of the endgame of Liar's Dice.
+# An analysis of the end game of Liar's Dice.
 
-This project analyses the two player end game of [Liar's Dice](https://en.wikipedia.org/wiki/Liar%27s_dice)
-using the theory of games with [Imperfect information](https://en.wikipedia.org/wiki/Perfect_information).
-The Nash equilibrium is found by the method of [Daphne Koller and Nimrod Megiddo](http://www.sciencedirect.com/science/article/pii/089982569290035Q)
-which reduces the game to a linear program of size polynomial in the number of states or "information sets".
-The linear programs are solved using the Glop solver from [Google or-tools](https://developers.google.com/optimization/).
+![Dice](https://upload.wikimedia.org/wikipedia/commons/5/5c/Perudo.jpg)
+
+[Liar's Dice](https://en.wikipedia.org/wiki/Liar%27s_dice) is a dice game of hidden information and deception.
+In the end game of Liar's dice, two players roll a number of dice in secret.
+Hereafter they take turns bidding, announcing any (number 1+, face value ⚀-⚅) pair.
+The second player has to make a bid higher than the first, or may call the bid.
+In the later case all dice are revealed, and the player who made the bid wins if it was correct.
 
 | 1v1	| Normal 	| Joker  	| Stairs 	|
 |----	|--------	|--------	|--------	|
@@ -44,6 +46,14 @@ As expected this improves the expected score, however it also increases the size
 | 4 	| -1/8   	| -1/32      	|       	|
 | 5 	| -27/125  	| -3/125      	|    	|
 | 6 	|    	|  	|        	|
+
+# Method
+
+This project analyses the two player end game of Liar's Dice
+using the theory of games with [Imperfect information](https://en.wikipedia.org/wiki/Perfect_information).
+The Nash equilibrium is found by the method of [Daphne Koller and Nimrod Megiddo](http://www.sciencedirect.com/science/article/pii/089982569290035Q)
+which reduces the game to a linear program of size polynomial in the number of states or "information sets".
+The linear programs are solved using the Glop solver from [Google or-tools](https://developers.google.com/optimization/).
 
 # Running the code
 

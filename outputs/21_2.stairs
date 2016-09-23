@@ -1,0 +1,90 @@
+Setting up linear program
+Solving
+Trees:
+Roll: (1, 1), Expected: 1, Values: 1, 1
+|  22 p=1
+|  |  32 **
+|  |  |  snyd p=1
+|  |  42 __
+|  |  |  snyd p=1
+|  |  52 __
+|  |  |  snyd p=1
+|  |  62 __
+|  |  |  snyd p=1
+|  |  snyd __
+Roll: (1, 2), Expected: 0, Values: 1, -1
+|  22 p=1/2
+|  |  32 **
+|  |  |  52 p=1
+|  |  |  |  62 *_
+|  |  |  |  |  snyd p=1
+|  |  |  |  snyd _*
+|  |  42 __
+|  |  |  52 p=1
+|  |  |  |  62 *_
+|  |  |  |  |  snyd p=1
+|  |  |  |  snyd _*
+|  |  52 __
+|  |  |  62 p=1
+|  |  |  |  snyd **
+|  |  62 __
+|  |  |  snyd p=1
+|  |  snyd __
+|  32 p=1/2
+|  |  42 **
+|  |  |  52 p=1
+|  |  |  |  62 *_
+|  |  |  |  |  snyd p=1
+|  |  |  |  snyd _*
+|  |  52 __
+|  |  |  62 p=1
+|  |  |  |  snyd **
+|  |  62 __
+|  |  |  snyd p=1
+|  |  snyd __
+Roll: (2, 1), Expected: 1/2, Values: 0, 1
+|  22 p=1/2
+|  |  32 **
+|  |  |  snyd p=1
+|  |  42 __
+|  |  |  snyd p=1
+|  |  52 __
+|  |  |  snyd p=1
+|  |  62 __
+|  |  |  snyd p=1
+|  |  snyd __
+|  32 p=1/2
+|  |  42 **
+|  |  |  snyd p=1
+|  |  52 __
+|  |  |  snyd p=1
+|  |  62 __
+|  |  |  snyd p=1
+|  |  snyd __
+Roll: (2, 2), Expected: 0, Values: 0, 0
+|  22 p=1/2
+|  |  32 **
+|  |  |  42 p=1
+|  |  |  |  52 *_
+|  |  |  |  |  snyd p=1
+|  |  |  |  62 __
+|  |  |  |  |  snyd p=1
+|  |  |  |  snyd _*
+|  |  42 __
+|  |  |  62 p=1
+|  |  |  |  snyd **
+|  |  52 __
+|  |  |  snyd p=1
+|  |  62 __
+|  |  |  snyd p=1
+|  |  snyd __
+|  32 p=1/2
+|  |  42 **
+|  |  |  snyd p=1
+|  |  52 __
+|  |  |  snyd p=1
+|  |  62 __
+|  |  |  snyd p=1
+|  |  snyd __
+Value: 3/8
+Score: 3/8

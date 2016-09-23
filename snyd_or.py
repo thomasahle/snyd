@@ -5,6 +5,7 @@ import sys
 from ortools.linear_solver import pywraplp
 import fractions
 from functools import lru_cache
+import time
 
 
 if len(sys.argv) < 4:
@@ -47,10 +48,14 @@ SNYD = None
 
 def possible_calls(hist):
     if not hist:
-        return CALLS
+        yield from CALLS
+        return
     if hist[-1] is SNYD:
-        return []
-    return [call for call in CALLS if call > hist[-1]] + [SNYD]
+        return
+    for call in CALLS:
+        if call > hist[-1]:
+            yield call
+    yield SNYD
 
 def is_correct_call(d1, d2, call):
     count, side = call
@@ -73,21 +78,15 @@ def histories(hist=()):
     if not is_leaf(hist):
         for call in possible_calls(hist):
             yield from histories(hist+(call,))
-dfs = list(histories())
-histories = list(histories())
-histories.sort(key = len)
-
-leafs = [hist for hist in histories if is_leaf(hist)]
-non_leafs = [hist for hist in histories if not is_leaf(hist)]
 
 # xs (ys) are the states after a move by player + the root.
 # Each of these are given a variable, since they are either leafs or parents to leafs.
 # This is of course game specific, so maybe it's a bad way to do it...
-xs = [h for h in histories if not h or len(h)%2==1]
-ys = [h for h in histories if not h or len(h)%2==0]
+xs = lambda: (h for h in histories() if not h or len(h)%2==1)
+ys = lambda: (h for h in histories() if not h or len(h)%2==0)
 # The inners are those with children. Note the root is present in both.
-inner_xs = [h for h in xs if not is_leaf(h)]
-inner_ys = [h for h in ys if not is_leaf(h)]
+inner_xs = lambda: (h for h in xs() if not is_leaf(h))
+inner_ys = lambda: (h for h in ys() if not is_leaf(h))
 
 def score(d1, d2, hist):
     ''' Get the score in {-1,1} relative to player 1 '''
@@ -105,17 +104,25 @@ def score(d1, d2, hist):
 ################################################################
 
 def initSolver():
+    t = time.time()
+    print('Creating variables...', file=sys.stderr)
     solver = pywraplp.Solver('', pywraplp.Solver.GLOP_LINEAR_PROGRAMMING)
     zvs = {(d2,x): solver.NumVar(-solver.infinity(), solver.infinity(),
-        'z{}h{}'.format(d2,shist(x))) for x in inner_xs for d2 in ROLLS2}
+        'z{}h{}'.format(d2,shist(x))) for x in inner_xs() for d2 in ROLLS2}
     xvs = {(d1,x): solver.NumVar(0, 1,
-        'x{}h{}'.format(d1,shist(x))) for x in xs for d1 in ROLLS1}
+        'x{}h{}'.format(d1,shist(x))) for x in xs() for d1 in ROLLS1}
+    print('Took {}s'.format(time.time()-t), file=sys.stderr)
+
+    t = time.time()
+    print('Setting constraints 1', file=sys.stderr)
 
     # The thing to maximize: f.T@z
     objective = solver.Objective()
     for d2 in ROLLS2:
         objective.SetCoefficient(zvs[d2,()], 1)
     objective.SetMaximization()
+
+    print('Took {}s'.format(time.time()-t), file=sys.stderr)
 
     # E: (d1,x) -> (d1,y_inner)
     # F^T: (d2,x_inner) -> (d2,y)
@@ -133,6 +140,8 @@ def initSolver():
     #print(simp)
 
 
+    t = time.time()
+    print('Setting constraints 2', file=sys.stderr)
 
     # Equalities: Ex = e
     #print('Equalities')
@@ -144,7 +153,7 @@ def initSolver():
         #print('1 =', xvs[d1,()].name())
         #print('1 =', simp[d1,()])
         # Make siblings sum to their parent
-        for hist in inner_ys:
+        for hist in inner_ys():
             constraint = solver.Constraint(0, 0)
             #print('0 =', end=' ')
             constraint.SetCoefficient(xvs[d1,hist[:-1]], 1)
@@ -155,6 +164,8 @@ def initSolver():
                 #print('-', simp[d1,hist+(call,)], end=' ')
                 constraint.SetCoefficient(xvs[d1,hist+(call,)], -1)
             #print()
+
+    print('Took {}s'.format(time.time()-t), file=sys.stderr)
 
     #F = np.zeros((len(inner_xs)+1, len(ys)))
     #for i, x in enumerate(inner_xs):
@@ -170,6 +181,9 @@ def initSolver():
     # F and A must have equal number of collumns
     # This is true, they both have ROLLS x ys
 
+    t = time.time()
+    print('Setting constraints 3', file=sys.stderr)
+
     # Bound zT@F - xT@A <= 0
     # Bound F.T@z - A.Tx <= 0
     # z@F0 - x@A0 >= 0, ...
@@ -177,7 +191,7 @@ def initSolver():
     for d2 in ROLLS2:
         #print('Roll', d2)
         # Now the leafs
-        for hist in ys:
+        for hist in ys():
             constraint = solver.Constraint(-solver.infinity(), 0)
             #print('0 >= ', end='')
             if hist == ():
@@ -207,11 +221,13 @@ def initSolver():
             lhist = hist+(SNYD,) if hist[-1] is not SNYD else hist
             xhist = hist+(SNYD,) if hist[-1] is not SNYD else hist[:-1]
             for d1 in ROLLS1:
-                sign = '-' if -score(d1, d2, lhist) < 0 else '+'
+                #sign = '-' if -score(d1, d2, lhist) < 0 else '+'
                 #print(sign, xvs[d1,xhist].name(), end=' ')
                 #print(sign, simp[d1,xhist], end=' ')
                 constraint.SetCoefficient(xvs[d1,xhist], -score(d1, d2, lhist))
             #print()
+
+    print('Took {}s'.format(time.time()-t), file=sys.stderr)
 
     return solver, xvs, zvs
 
@@ -246,7 +262,7 @@ class CounterStrategy:
         if sum(self.findCallProb(d1,hist) for d1 in ROLLS1) < 1e-6:
             #if d2 == (0,) and hist == ((1,1),):
             #    print('findP2Call called on impossible history')
-            return possible_calls(hist)[0]
+            return next(possible_calls(hist))
         pd1s = self.estimateP1Rolls(hist)
         if d2 == (0,) and hist == ((1,1),):
             pass
@@ -284,7 +300,7 @@ class CounterStrategy:
 def printTrees(cs):
     print('Trees:')
     for d1 in ROLLS1:
-        for hist in dfs:
+        for hist in histories():
             # At root, print the roll value
             if not hist:
                 avgValue = sfrac(sum(cs.stateValue(d1, d2, ()) for d2 in ROLLS2)/len(ROLLS2))
@@ -295,7 +311,7 @@ def printTrees(cs):
             if any(cs.findCallProb(d1, hist[:j]) < 1e-8 for j in range(1,len(hist)+1,2)):
                 continue
             s = '|  '*len(hist) + (scall(hist[-1]) if hist else 'root')
-            if hist in xs:
+            if len(hist)%2==1:
                 prob = sfrac(cs.findCallProb(d1, hist))
                 print('{} p={}'.format(s, prob))
             else:
@@ -303,15 +319,19 @@ def printTrees(cs):
                         for d2 in ROLLS2)
                 print(s, tag)
 def main():
-    print('Setting up linear program')
+    print('Setting up linear program', file=sys.stderr)
     solver, xvs, zvs = initSolver()
 
-    print('Solving')
+    t = time.time()
+    print('Solving', file=sys.stderr)
+
     status = solver.Solve()
     if status != solver.OPTIMAL:
-        print('Status:', status)
+        print('Status:', status, file=sys.stderr)
         print(zvs[(0,),()].solution_value())
         return
+
+    print('Took {}s'.format(time.time()-t), file=sys.stderr)
 
     cs = CounterStrategy(xvs)
     printTrees(cs)

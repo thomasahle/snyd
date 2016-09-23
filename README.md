@@ -31,9 +31,9 @@ Notably for the above table, the roll of a single ⚀ now counts as 2 of any kin
 | 1 	| 1      	| -       	| -       	|
 | 2 	| 1/4     | 1      	|  3/8     	|
 | 3 	| 1/9   	| 1/3    	| 1/27     	|
-| 4 	| 345/1696   	|  1/4     	|       	|
+| 4 	| 345/1696   	|  1/4     	| 1/16      	|
 | 5 	| 2128/8375  	| 34/125      	|    	|
-| 6 	|    	|  	|        	|
+| 6 	| 0.275..   	| 7/27 	|        	|
 
 In this table, the first player has two dice, version the second player who has only one dice.
 As expected this improves the expected score, however it also increases the size of the linear program, and thus the table is not complete.
@@ -43,9 +43,9 @@ As expected this improves the expected score, however it also increases the size
 | 1 	| 1      	| -       	| -       	|
 | 2 	| 0     | 1      	| -1/4      	|
 | 3 	| -1/27   	| -1/27    	| -1/27     	|
-| 4 	| -1/8   	| -1/32      	|       	|
+| 4 	| -1/8   	| -1/32      	| 1/16      	|
 | 5 	| -27/125  	| -3/125      	|    	|
-| 6 	|    	|  	|        	|
+| 6 	|    	| -5/54 	|        	|
 
 # Method
 

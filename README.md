@@ -45,7 +45,7 @@ As expected this improves the expected score, however it also increases the size
 | 3 	| -1/27   	| -1/27    	| -1/27     	|
 | 4 	| -1/8   	| -1/32      	| 1/16      	|
 | 5 	| -27/125  	| -3/125      	|    	|
-| 6 	|    	| -5/54 	|        	|
+| 6 	| -22/81   	| -5/54 	|        	|
 
 # Method
 

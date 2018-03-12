@@ -8,6 +8,14 @@ Hereafter they take turns bidding, announcing any (number 1+, face value ⚀-⚅
 The second player has to make a bid higher than the first, or may call the bid.
 In the later case all dice are revealed, and the player who made the bid wins if it was correct.
 
+| Normal 	| Joker  	| Stairs 	|
+|--------	|--------	|--------	|
+| ![normal](https://raw.githubusercontent.com/thomasahle/snyd/master/outputs/11_normal-1.png)	| ![normal](https://raw.githubusercontent.com/thomasahle/snyd/master/outputs/11_joker-1.png) 	| ![normal](https://raw.githubusercontent.com/thomasahle/snyd/master/outputs/11_stairs-1.png)  	|
+
+The table above shows the ideal call if you are go first in a 1v1 game with 6-sided dice.
+Your roll is the row 1-6 and your call is the column, with lighter colors meaning higher probability of calling.
+Note that there is never a non-zero probability for calling "one 1" or two of any kinds.
+
 | 1v1	| Normal 	| Joker  	| Stairs 	|
 |----	|--------	|--------	|--------	|
 | 1 	| 1      	| -      	| -      	|
@@ -25,6 +33,11 @@ The 'joker' version, in which a ⚀ participates towards any call, the game turn
 It's interesting to note, that the game is perfectly balanced when the 'staircase' rule is included.
 With this rule, rolling a perfect permutation `⚀, ⚁, ..., k` is the same as rolling `k+1` ⚀'s with the joker rule.
 Notably for the above table, the roll of a single ⚀ now counts as 2 of any kind.
+
+| First Header  | Second Header |
+| ------------- | ------------- |
+| Content Cell  | Content Cell  |
+| Content Cell  | Content Cell  |
 
 | 2v1	| Normal 	| Joker  	| Stairs 	|
 |----	|--------	|--------	|--------	|

@@ -71,7 +71,7 @@ def repr_action(action):
 
 
 while True:
-    while (ans := input("Do you want to go first? [y/n/r] ")) not in "ynr":
+    while (ans := input("Do you want to go first? [y/n/r] ")) not in ["y", "n", "r"]:
         pass
 
     r1 = random.choice(list(game.rolls(0)))

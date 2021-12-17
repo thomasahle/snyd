@@ -25,6 +25,7 @@ class Net(torch.nn.Module):
         joined = self.layer0(priv, pub)
         return self.seq(joined)
 
+
 def calc_args(d1, d2, sides, variant):
     # Maximum call is (D1+D2) 6s
     D_PUB = (d1 + d2) * sides
@@ -52,6 +53,7 @@ def calc_args(d1, d2, sides, variant):
 
     return D_PUB, D_PRI, N_ACTIONS, LIE_ACTION, CUR_INDEX, PRI_INDEX
 
+
 class Game:
     def __init__(self, model, d1, d2, sides, variant):
         self.model = model
@@ -60,18 +62,24 @@ class Game:
         self.SIDES = sides
         self.VARIANT = variant
 
-        self.D_PUB, self.D_PRI, self.N_ACTIONS, self.LIE_ACTION, self.CUR_INDEX, self.PRI_INDEX = \
-                calc_args(d1, d2, sides, variant)
+        (
+            self.D_PUB,
+            self.D_PRI,
+            self.N_ACTIONS,
+            self.LIE_ACTION,
+            self.CUR_INDEX,
+            self.PRI_INDEX,
+        ) = calc_args(d1, d2, sides, variant)
 
     def make_regrets(self, priv, state, last_call):
         """
-            priv: Private state, including the perspective for the scores
-            state: Public statte
-            last_call: Last action taken by a player. Returned regrets will be for actions after this one.
+        priv: Private state, including the perspective for the scores
+        state: Public statte
+        last_call: Last action taken by a player. Returned regrets will be for actions after this one.
         """
 
         if priv[self.PRI_INDEX] != state[self.CUR_INDEX]:
-            print('Warning: Regrets are not with respect to current player')
+            print("Warning: Regrets are not with respect to current player")
 
         # Number of child nodes
         n_actions = self.N_ACTIONS - last_call - 1
@@ -88,8 +96,7 @@ class Game:
         v, *vs = list(self.model(priv_batch, batch))
         return [max(vi - v, 0) for vi in vs]
         # The Hedge method
-        #return [math.exp(10*(vi - v)) for vi in vs]
-
+        # return [math.exp(10*(vi - v)) for vi in vs]
 
     def evaluate(self, r1, r2, last_call):
         # Players have rolled r1, and r2.
@@ -115,17 +122,20 @@ class Game:
                 actual += 2 * len(r1) - r1.count(d)
             if all(r == i + 1 for r, i in zip(r2, range(self.SIDES))):
                 actual += 2 * len(r2) - r1.count(d)
-        #print(f'{r1=}, {r2=}, {last_call=}, {(n, d)=}, {actual=}', actual >= n)
+        # print(f'{r1=}, {r2=}, {last_call=}, {(n, d)=}, {actual=}', actual >= n)
         return actual >= n
 
     def sample_action(self, priv, state, last_call, eps):
         regrets = self.make_regrets(priv, state, last_call)
         for i in range(len(regrets)):
             regrets[i] += eps
-        action = next(
-            iter(torch.utils.data.WeightedRandomSampler(regrets, num_samples=1))
-        ) + last_call + 1
-        return action
+        if sum(regrets) <= 0:
+            action = random.choice(range(len(regrets)))
+        else:
+            action = next(
+                iter(torch.utils.data.WeightedRandomSampler(regrets, num_samples=1))
+            )
+        return action + last_call + 1
 
     def apply_action(self, state, action):
         new_state = state.clone()
@@ -136,7 +146,7 @@ class Game:
     def make_priv(self, roll, player):
         priv = torch.zeros(self.D_PRI)
         assert player in [0, 1]
-        priv[self.PRI_INDEX] = 1 - 2*player
+        priv[self.PRI_INDEX] = 1 - 2 * player
         for i, r in enumerate(roll):
             priv[i * self.SIDES + r - 1] = 1
         return priv
@@ -148,16 +158,18 @@ class Game:
 
     def get_cur(self, state):
         # cur is the current player, in {1,-1}
-        return (1-int(state[self.CUR_INDEX]))//2 # now in {0,1}
+        return (1 - int(state[self.CUR_INDEX])) // 2  # now in {0,1}
 
     def rolls(self, player):
         assert player in [0, 1]
         n_faces = self.D1 if player == 0 else self.D2
-        return itertools.product(range(1, self.SIDES + 1), repeat=n_faces)
+        return [
+            tuple(sorted(r))
+            for r in itertools.product(range(1, self.SIDES + 1), repeat=n_faces)
+        ]
 
     def get_last_call(self, state):
-        ids = tuple((state[:self.CUR_INDEX] == 1).nonzero(as_tuple=True)[0])
+        ids = tuple((state[: self.CUR_INDEX] == 1).nonzero(as_tuple=True)[0])
         if not ids:
             return -1
         return int(ids[-1])
-

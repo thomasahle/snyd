@@ -9,7 +9,7 @@ from collections import Counter
 import argparse
 import os
 
-from snyd import Net, Game, calc_args
+from snyd import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("d1", type=int, help="Number of dice for player 1")
@@ -38,7 +38,8 @@ else:
 
 # Model : (private state, public state) -> value
 D_PUB, D_PRI, *_ = calc_args(args.d1, args.d2, args.sides, args.variant)
-model = Net(D_PRI, D_PUB, [args.layer_size] * args.layers)
+model = Net(D_PRI, D_PUB)
+#model = Net2(D_PRI, D_PUB)
 game = Game(model, args.d1, args.d2, args.sides, args.variant)
 
 if checkpoint is not None:
@@ -50,36 +51,31 @@ if checkpoint is not None:
 def play(r1, r2, replay_buffer):
     privs = [game.make_priv(r1, 0), game.make_priv(r2, 1)]
 
-    def play_inner(last_call, state):
+    def play_inner(state):
         cur = game.get_cur(state)
-        action = game.sample_action(privs[cur], state, last_call, args.eps)
+        calls = game.get_calls(state)
+        assert cur == len(calls) % 2
 
-        # Create state for after action has been done, and cur switched
-        new_state = game.apply_action(state, action)
+        if calls and calls[-1] == game.LIE_ACTION:
+            prev_call = calls[-2] if len(calls) >= 2 else -1
+            # If prev_call is good it mean we won (because our opponent called lie)
+            res = 1 if game.evaluate_call(r1, r2, prev_call) else -1
 
-        if action == game.LIE_ACTION:
-            # If the last call is good it mean we lost (because we called lie)
-            res = -1 if game.evaluate(r1, r2, last_call) else 1
+        else:
+            last_call = calls[-1] if calls else -1
+            action = game.sample_action(privs[cur], state, last_call, args.eps)
+            new_state = game.apply_action(state, action)
+            # Just classic min/max stuff
+            res = -play_inner(new_state)
 
-            replay_buffer.append((privs[cur], new_state, res))
-            replay_buffer.append((privs[1 - cur], new_state, -res))
-
-            replay_buffer.append((privs[cur], state, res))
-            replay_buffer.append((privs[1 - cur], state, -res))
-
-            return res
-
-        # Just classic min/max stuff
-        res = -play_inner(action, new_state)
-
+        # Save the result from the perspective of both sides
         replay_buffer.append((privs[cur], state, res))
         replay_buffer.append((privs[1 - cur], state, -res))
 
         return res
 
     with torch.no_grad():
-        # last_call is -1 if there has been no calls
-        play_inner(-1, game.make_state())
+        play_inner(game.make_state())
 
 
 def print_strategy(state):

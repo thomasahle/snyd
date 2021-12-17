@@ -21,7 +21,7 @@ train_args = checkpoint["args"]
 D_PUB, D_PRI, *_ = calc_args(
     train_args.d1, train_args.d2, train_args.sides, train_args.variant
 )
-model = Net(D_PRI, D_PUB, [train_args.layer_size] * train_args.layers)
+model = Net(D_PRI, D_PUB)
 model.load_state_dict(checkpoint["model_state_dict"])
 game = Game(model, train_args.d1, train_args.d2, train_args.sides, train_args.variant)
 

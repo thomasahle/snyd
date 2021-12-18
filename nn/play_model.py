@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("path", type=str, help="Path of model")
 args = parser.parse_args()
 
-checkpoint = torch.load(args.path)
+checkpoint = torch.load(args.path, map_location=torch.device('cpu'))
 train_args = checkpoint["args"]
 
 D_PUB, D_PRI, *_ = calc_args(

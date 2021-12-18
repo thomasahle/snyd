@@ -25,6 +25,7 @@ def lbr(game, roll, us, prune=0, prune_type='zero'):
         cur = len(calls) % 2
 
         if likelihood < prune:
+            #print('Pruning', likelihood)
             if prune_type == 'zero':
                 return 0
             # I can return +1 or -1 here to get either an upper or lower
@@ -82,6 +83,10 @@ def lbr(game, roll, us, prune=0, prune_type='zero'):
 
         # Chance node
         else:
+            # Note: game.policy evaluates the model on this state as well
+            # as all children, which means that in essense we compute the
+            # model on the entire game tree, and not just the opponents nodes.
+
             policies = torch.vstack([
                 torch.tensor(game.policy(op_priv, state, last_call))
                 for op_priv in op_privs])

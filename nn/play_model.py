@@ -96,7 +96,7 @@ while True:
 
         if action == game.LIE_ACTION:
             last_call = game.get_last_call(state)
-            res = game.evaluate(r1, r2, last_call)
+            res = game.evaluate_call(r1, r2, last_call)
             print()
             print(f"> The rolls were {r1} and {r2}.")
             if res:

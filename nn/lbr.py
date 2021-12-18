@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import torch
 import argparse
-import numpy as np
 
 from snyd import Net, Game, calc_args
 from collections import Counter
@@ -95,7 +94,7 @@ def lbr(game, roll, us, prune=0, prune_type='zero'):
             for action in range(last_call + 1, game.N_ACTIONS):
                 ai = action - last_call - 1
                 pa = reach_probs @ policies[:, ai]
-                if np.isclose(pa, 0):
+                if torch.isclose(pa, torch.tensor(0.0)):
                     continue
                 # Bayes: P(R|A) = P(R)P(A|R)/P(A)
                 # P(A) = P(R)P(A|R)/sum(P(A|r)P(r) for r in Rs)
@@ -111,7 +110,7 @@ def lbr(game, roll, us, prune=0, prune_type='zero'):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("path", type=str, help="Path of model to test")
-    parser.add_argument("--prune", type=float, default=0, help="Prune nodes with likelihood < prune")
+    parser.add_argument("--prune", type=float, default=0.0, help="Prune nodes with likelihood < prune")
     parser.add_argument("--type", type=str, default='zero', help="What should be used in place of the real value in pruned nodes?")
             #options=['upper', 'lower', 'zero', 'us', 'them', 'avg'])
     args = parser.parse_args()

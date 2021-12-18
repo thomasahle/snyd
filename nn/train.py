@@ -3,7 +3,6 @@ import random
 import torch
 from torch import nn
 import itertools
-import numpy as np
 import math
 from collections import Counter
 import argparse
@@ -47,9 +46,14 @@ if checkpoint is not None:
     model.load_state_dict(checkpoint["model_state_dict"])
 
 
+device = torch.device("cuda")
+model.to(device)
+
+
 @torch.no_grad()
 def play(r1, r2, replay_buffer):
-    privs = [game.make_priv(r1, 0), game.make_priv(r2, 1)]
+    privs = [game.make_priv(r1, 0).to(device),
+            game.make_priv(r2, 1).to(device)]
 
     def play_inner(state):
         cur = game.get_cur(state)
@@ -75,16 +79,17 @@ def play(r1, r2, replay_buffer):
         return res
 
     with torch.no_grad():
-        play_inner(game.make_state())
+        state = game.make_state().to(device)
+        play_inner(state)
 
 
 def print_strategy(state):
     total_v = 0
     total_cnt = 0
     for r1, cnt in sorted(Counter(game.rolls(0)).items()):
-        priv = game.make_priv(r1, 0)
+        priv = game.make_priv(r1, 0).to(device)
         v = model(priv, state)
-        rs = np.array(game.make_regrets(priv, state, last_call=-1))
+        rs = torch.tensor(game.make_regrets(priv, state, last_call=-1))
         if rs.sum() != 0:
             rs /= rs.sum()
         strat = []
@@ -114,16 +119,23 @@ def train():
 
         random.shuffle(replay_buffer)
         privs, states, y = zip(*replay_buffer)
-        y_pred = model(torch.vstack(privs), torch.vstack(states))
+
+        privs = torch.vstack(privs).to(device)
+        states = torch.vstack(states).to(device)
+        y = torch.tensor(y, dtype=torch.float).reshape(-1, 1).to(device)
+        #privs.to(device)
+        #states.to(device)
+        #privs.to(device)
+
+        y_pred = model(privs, states)
 
         # Compute and print loss
-        y = torch.tensor(y, dtype=torch.float).reshape(-1, 1)
         loss = value_loss(y_pred, y)
         print(t, loss.item())
 
         if t % 5 == 0:
             with torch.no_grad():
-                print_strategy(game.make_state())
+                print_strategy(game.make_state().to(device))
 
         # Zero gradients, perform a backward pass, and update the weights.
         optimizer.zero_grad()
@@ -142,6 +154,17 @@ def train():
                 },
                 args.path,
             )
+        if (t+1)%1000 == 0:
+            torch.save(
+                {
+                    "epoch": t,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "args": args,
+                },
+                f'{args.path}.cp{t+1}',
+            )
+
 
 
 train()

@@ -27,6 +27,27 @@ class Net(torch.nn.Module):
         joined = self.layer0(priv, pub)
         return self.seq(joined)
 
+
+class NetConcat(torch.nn.Module):
+    def __init__(self, d_pri, d_pub):
+        super().__init__()
+
+        hiddens = (500, 400, 300, 200, 100)
+
+        layers = [
+                torch.nn.Linear(d_pri+d_pub, hiddens[0]),
+                torch.nn.ReLU()]
+        for size0, size1 in zip(hiddens, hiddens[1:]):
+            layers += [torch.nn.Linear(size0, size1), torch.nn.ReLU()]
+        layers += [torch.nn.Linear(hiddens[-1], 1), nn.Tanh()]
+        self.seq = nn.Sequential(*layers)
+
+    def forward(self, priv, pub):
+        joined = torch.hstack([priv, pub])
+        return self.seq(joined)
+
+
+
 class Resid(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):
         super().__init__()
@@ -108,27 +129,32 @@ def calc_args(d1, d2, sides, variant):
     D_PUB = (d1 + d2) * sides
     if variant == "stairs":
         D_PUB = 2 * (d1 + d2) * sides
+
     # We also have a feature that means "game has been called"
+    LIE_ACTION = D_PUB
     D_PUB += 1
 
     # Total number of actions in the game
     N_ACTIONS = D_PUB
-    LIE_ACTION = N_ACTIONS - 1
 
-    # Add one extra feature to keep track of who's to play next
+    # Add two extra features to keep track of who's to play next
     CUR_INDEX = D_PUB
     D_PUB += 1
+
+    # Duplicate for other player
+    D_PUB_PER_PLAYER = D_PUB
+    D_PUB *= 2
 
     # One player technically may have a smaller private space than the other,
     # but we just take the maximum for simplicity
     D_PRI = max(d1, d2) * sides
 
-    # And then a feature to describe from whos perspective we
+    # And then two features to describe from whos perspective we
     # are given the private information
     PRI_INDEX = D_PRI
-    D_PRI += 1
+    D_PRI += 2
 
-    return D_PUB, D_PRI, N_ACTIONS, LIE_ACTION, CUR_INDEX, PRI_INDEX
+    return D_PUB, D_PRI, N_ACTIONS, LIE_ACTION, CUR_INDEX, PRI_INDEX, D_PUB_PER_PLAYER
 
 
 class Game:
@@ -146,6 +172,7 @@ class Game:
             self.LIE_ACTION,
             self.CUR_INDEX,
             self.PRI_INDEX,
+            self.D_PUB_PER_PLAYER
         ) = calc_args(d1, d2, sides, variant)
 
     def make_regrets(self, priv, state, last_call):
@@ -165,8 +192,7 @@ class Game:
         batch = state.repeat(n_actions + 1, 1)
 
         for i in range(n_actions):
-            batch[i + 1][self.CUR_INDEX] *= -1
-            batch[i + 1][i + last_call + 1] = 1
+            self._apply_action(batch[i+1], i+last_call+1)
 
         priv_batch = priv.repeat(n_actions + 1, 1)
 
@@ -221,16 +247,29 @@ class Game:
 
     def apply_action(self, state, action):
         new_state = state.clone()
-        new_state[action] = 1
-        new_state[self.CUR_INDEX] *= -1
+        self._apply_action(new_state, action)
         return new_state
 
+    def _apply_action(self, state, action):
+        # Inplace
+        cur = self.get_cur(state)
+        state[action + cur * self.D_PUB_PER_PLAYER] = 1
+        state[self.CUR_INDEX + cur * self.D_PUB_PER_PLAYER] = 0
+        state[self.CUR_INDEX + (1-cur) * self.D_PUB_PER_PLAYER] = 1
+        return state
+
     def make_priv(self, roll, player):
-        priv = torch.zeros(self.D_PRI)
         assert player in [0, 1]
-        priv[self.PRI_INDEX] = 1 - 2 * player
-        for i, r in enumerate(roll):
-            priv[i * self.SIDES + r - 1] = 1
+        priv = torch.zeros(self.D_PRI)
+        priv[self.PRI_INDEX + player] = 1
+        # New method inspired by Chinese poker paper
+        cnt = Counter(roll)
+        for face, c in cnt.items():
+            for i in range(c):
+                priv[(face-1) * max(self.D1, self.D2) + i] = 1
+        # Old encoding
+        # for i, r in enumerate(roll):
+        #     priv[i * self.SIDES + r - 1] = 1
         return priv
 
     def make_state(self):
@@ -239,8 +278,8 @@ class Game:
         return state
 
     def get_cur(self, state):
-        # cur is the current player, in {1,-1}
-        return (1 - int(state[self.CUR_INDEX])) // 2  # now in {0,1}
+        # Player index in {0,1} is equal to one-hot encoding of player 2
+        return 1 - int(state[self.CUR_INDEX])
 
     def rolls(self, player):
         assert player in [0, 1]
@@ -251,7 +290,8 @@ class Game:
         ]
 
     def get_calls(self, state):
-        return (state[: self.CUR_INDEX] == 1).nonzero(as_tuple=True)[0].tolist()
+        merged = state[: self.CUR_INDEX] + state[self.D_PUB_PER_PLAYER : self.D_PUB_PER_PLAYER + self.CUR_INDEX]
+        return (merged == 1).nonzero(as_tuple=True)[0].tolist()
 
     def get_last_call(self, state):
         ids = self.get_calls(state)

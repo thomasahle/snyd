@@ -18,8 +18,8 @@ parser.add_argument("--variant", type=str, default="normal", help="one of normal
 parser.add_argument("--eps", type=float, default=1e-2, help="Added to regrets for exploration")
 parser.add_argument("--layers", type=int, default=4, help="Number of fully connected layers")
 parser.add_argument("--layer-size", type=int, default=100, help="Number of neurons per layer")
-parser.add_argument("--lr-decay", type=float, default=0.999, help="LR = (lr-decay)**t")
-parser.add_argument("--w", type=float, default=0.01, help="weight decay")
+parser.add_argument("--lr", type=float, default=1e-3, help="LR = lr/t")
+parser.add_argument("--w", type=float, default=1e-2, help="weight decay")
 parser.add_argument("--path", type=str, default="model.pt", help="Where to save checkpoints")
 
 args = parser.parse_args()
@@ -37,7 +37,8 @@ else:
 
 # Model : (private state, public state) -> value
 D_PUB, D_PRI, *_ = calc_args(args.d1, args.d2, args.sides, args.variant)
-model = Net(D_PRI, D_PUB)
+model = NetConcat(D_PRI, D_PUB)
+#model = Net(D_PRI, D_PUB)
 #model = Net2(D_PRI, D_PUB)
 game = Game(model, args.d1, args.d2, args.sides, args.variant)
 
@@ -105,9 +106,25 @@ def print_strategy(state):
     print(f"Mean value: {total_v / total_cnt}")
 
 
+class ReciLR(torch.optim.lr_scheduler._LRScheduler):
+    def __init__(self, optimizer, gamma=1, last_epoch=-1, verbose=False):
+        self.gamma = gamma
+        super(ReciLR, self).__init__(optimizer, last_epoch, verbose)
+
+    def get_lr(self):
+        return [base_lr / (self.last_epoch + 1)**self.gamma
+                for base_lr, group in zip(self.base_lrs, self.optimizer.param_groups)]
+
+    def _get_closed_form_lr(self):
+        return [base_lr / (self.last_epoch + 1)**self.gamma for base_lr in self.base_lrs]
+
+
+
+
+
 def train():
     optimizer = torch.optim.AdamW(model.parameters(), weight_decay=args.w)
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=args.lr_decay)
+    scheduler = ReciLR(optimizer, gamma=.5)
     value_loss = torch.nn.MSELoss()
     all_rolls = list(itertools.product(game.rolls(0), game.rolls(1)))
     for t in range(100_000):

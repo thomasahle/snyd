@@ -8,7 +8,7 @@
 
   <body>
     <div class="card elevation">
-      <div class="card elevation">
+      <div class="card">
          <div>The robot has <span id="robot-dice"></span> dice</div>
          <div>Your roll: <span id="roll"></span></div>
       </div>
@@ -16,22 +16,24 @@
       </div>
       <div class="card elevation">
          <div class='link' id='lie-link'>
-            Call Lie!
+            Challenge!
          </div>
-         <div>
+         <div class="card">
             <span id="call-lead-span"></span>
-            <input type="number" placeholder="How many" min="1" id="number-input"/>
+            <input type="number" placeholder="How many" min="1" id="number-input"  inputmode="numeric" pattern="\d*"/>
             times
          </div>
          <div style='text-align: center'>
            <div class="dice-button" id="dice-1"><i class="fas fa-dice-one"></i></div>
            <div class="dice-button" id="dice-2"><i class="fas fa-dice-two"></i></div>
            <div class="dice-button" id="dice-3"><i class="fas fa-dice-three"></i></div>
+         </div>
+         <div style='text-align: center'>
            <div class="dice-button" id="dice-4"><i class="fas fa-dice-four"></i></div>
            <div class="dice-button" id="dice-5"><i class="fas fa-dice-five"></i></div>
            <div class="dice-button" id="dice-6"><i class="fas fa-dice-six"></i></div>
          </div>
-         <div style='text-align: center'>
+         <div style='text-align: center' class="card">
             <div class="button" id="submit-button">Submit</div>
          </div>
       </div>
@@ -40,9 +42,16 @@
       <div class="card">
          <span class="link" id="new-button">New Game</span>
          with
-         <input type="number" value="3" min="1" max="2" id="size-input"/>
+         <input type="number" value="3" min="1" max="3" id="size-input" pattern="\d*"nputmode="numeric" />
          dice
       </div>
+    </div>
+    <div class="rules">
+       Rules: Each player has a set of dice known only to them.
+       Players take turns bidding on the minimum number of dice that the player believes are showing a given value.
+       The player must bid a higher quantity of any particular face, or the same quantity of a higher face.
+       You may challenge the previous bid, if you don't believe it, or you can't make any higher bids.
+       1s (⚀) are wild and count for every face (including 1).
     </div>
     <script src="https://use.fontawesome.com/releases/v5.15.4/js/all.js" data-auto-a11y="true" ></script>
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>

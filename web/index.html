@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+  </head>
+
+  <body>
+    <div class="card elevation">
+      <div class="card elevation">
+         <div>The robot has <span id="robot-dice"></span> dice</div>
+         <div>Your roll: <span id="roll"></span></div>
+      </div>
+      <div id="history-div">
+      </div>
+      <div class="card elevation">
+         <div class='link' id='lie-link'>
+            Call Lie!
+         </div>
+         <div>
+            <span id="call-lead-span"></span>
+            <input type="number" placeholder="How many" min="1" id="number-input"/>
+            times
+         </div>
+         <div style='text-align: center'>
+           <div class="dice-button" id="dice-1"><i class="fas fa-dice-one"></i></div>
+           <div class="dice-button" id="dice-2"><i class="fas fa-dice-two"></i></div>
+           <div class="dice-button" id="dice-3"><i class="fas fa-dice-three"></i></div>
+           <div class="dice-button" id="dice-4"><i class="fas fa-dice-four"></i></div>
+           <div class="dice-button" id="dice-5"><i class="fas fa-dice-five"></i></div>
+           <div class="dice-button" id="dice-6"><i class="fas fa-dice-six"></i></div>
+         </div>
+         <div style='text-align: center'>
+            <div class="button" id="submit-button">Submit</div>
+         </div>
+      </div>
+
+
+      <div class="card">
+         <span class="link" id="new-button">New Game</span>
+         with
+         <input type="number" value="2" min="1" max="2" id="size-input"/>
+         dice
+      </div>
+    </div>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

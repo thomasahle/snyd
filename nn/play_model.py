@@ -9,7 +9,7 @@ from collections import Counter
 import argparse
 import re
 
-from snyd import Net, Game, calc_args
+from snyd import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("path", type=str, help="Path of model")
@@ -21,7 +21,7 @@ train_args = checkpoint["args"]
 D_PUB, D_PRI, *_ = calc_args(
     train_args.d1, train_args.d2, train_args.sides, train_args.variant
 )
-model = Net(D_PRI, D_PUB)
+model = NetCompBilin(D_PRI, D_PUB)
 model.load_state_dict(checkpoint["model_state_dict"])
 game = Game(model, train_args.d1, train_args.d2, train_args.sides, train_args.variant)
 

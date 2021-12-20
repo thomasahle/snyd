@@ -47,6 +47,31 @@ class NetConcat(torch.nn.Module):
         return self.seq(joined)
 
 
+class NetCompBilin(torch.nn.Module):
+    def __init__(self, d_pri, d_pub):
+        super().__init__()
+
+        hiddens = (100,)*4
+
+        middle = 500
+        self.layer_pri = torch.nn.Linear(d_pri, middle)
+        self.layer_pub = torch.nn.Linear(d_pub, middle)
+
+        layers = [
+                torch.nn.ReLU(),
+                torch.nn.Linear(middle, hiddens[0]),
+                torch.nn.ReLU()]
+        for size0, size1 in zip(hiddens, hiddens[1:]):
+            layers += [torch.nn.Linear(size0, size1), torch.nn.ReLU()]
+        layers += [torch.nn.Linear(hiddens[-1], 1), nn.Tanh()]
+        self.seq = nn.Sequential(*layers)
+
+    def forward(self, priv, pub):
+        joined = self.layer_pri(priv) * self.layer_pub(pub)
+        return self.seq(joined)
+
+
+
 
 class Resid(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):

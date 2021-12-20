@@ -1,3 +1,4 @@
 *.lbr
 *.cp*
 *.pt
+*.onnx

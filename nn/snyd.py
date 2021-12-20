@@ -43,7 +43,10 @@ class NetConcat(torch.nn.Module):
         self.seq = nn.Sequential(*layers)
 
     def forward(self, priv, pub):
-        joined = torch.hstack([priv, pub])
+        if len(priv.shape) == 1:
+            joined = torch.cat((priv, pub), dim=0)
+        else:
+            joined = torch.cat((priv, pub), dim=1)
         return self.seq(joined)
 
 

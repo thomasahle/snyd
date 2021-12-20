@@ -7,10 +7,11 @@
   </head>
 
   <body>
+     <h1>Liar's Dice 🤖</h1>
     <div class="card elevation">
       <div class="card">
-         <div>The robot has <span id="robot-dice"></span> dice</div>
-         <div>Your roll: <span id="roll"></span></div>
+         <div>The robot has <span id="robot-dice"></span> secret dice</div>
+         <div>You have <span id="roll"></span></div>
       </div>
       <div id="history-div">
       </div>
@@ -52,6 +53,7 @@
        The player must bid a higher quantity of any particular face, or the same quantity of a higher face.
        You may challenge the previous bid, if you don't believe it, or you can't make any higher bids.
        1s (⚀) are wild and count for every face (including 1).
+       (ref. <a href="https://en.wikipedia.org/wiki/Liar%27s_dice#Single_hand">Wikipedia</a>)
     </div>
     <script src="https://use.fontawesome.com/releases/v5.15.4/js/all.js" data-auto-a11y="true" ></script>
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>

@@ -17,12 +17,14 @@ def main():
 
     # Model : (private state, public state) -> value
     D_PUB, D_PRI, *_ = calc_args(args.d1, args.d2, args.sides, args.variant)
-    model = Net(D_PRI, D_PUB)
+    #model = Net(D_PRI, D_PUB)
+    model = NetCompBilin(D_PRI, D_PUB)
     model.load_state_dict(checkpoint["model_state_dict"])
 
     dummy_priv = torch.zeros(D_PRI)
     dummy_pub = torch.zeros(D_PUB)
-    torch.onnx.export(model, (dummy_priv, dummy_pub), path+'.onnx', verbose=True)
+    torch.onnx.export(model, (dummy_priv, dummy_pub), path+'.onnx', verbose=True,
+                    input_names=['priv', 'pub'], output_names=['value'])
 
 
 if __name__ == '__main__':

@@ -15,13 +15,18 @@ body {
   background: #fafafa;
   color: #212121;
 
-  width: 350px;
+  width: 400px;
   margin: 20px auto;
 
 
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
    line-height: 25px;
+}
+
+body > div {
+   padding-left: 30px !important;
+   padding-right: 30px !important;
 }
 
 .elevation {

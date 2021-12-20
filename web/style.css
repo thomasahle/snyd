@@ -24,6 +24,12 @@ body {
    line-height: 25px;
 }
 
+@media only screen and (max-width: 400px) {
+   body {
+      width: 100%! important;
+   }
+}
+
 body > div {
    padding-left: 30px !important;
    padding-right: 30px !important;

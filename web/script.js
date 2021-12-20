@@ -23,6 +23,17 @@ let humanId = 0;
 let privs = [null, null];
 let state = null;
 
+const phrases = [
+   "I'll say",
+   "Maybe",
+   "What about",
+   "I guess",
+   "OK,",
+   "Then I say",
+   "I say",
+   "Aha,",
+   "Hmm,"
+]
 
 let session = {};
 
@@ -32,9 +43,16 @@ let session = {};
 
 const modelNames = {};
 modelNames[[1,1]] = "./model_11_joker.onnx";
+
 modelNames[[1,2]] = "./model_12_joker.onnx";
 modelNames[[2,1]] = "./model_21_joker.onnx";
 modelNames[[2,2]] = "./model_22_joker.onnx";
+
+modelNames[[1,3]] = "./model_13_joker.onnx";
+modelNames[[3,1]] = "./model_31_joker.onnx";
+modelNames[[2,3]] = "./model_23_joker.onnx";
+modelNames[[3,2]] = "./model_32_joker.onnx";
+modelNames[[3,3]] = "./model_33_joker.onnx";
 
 async function value(state, priv) {
    const res = await session[Ds].run({ priv: priv, pub: state });
@@ -53,7 +71,7 @@ async function main() {
       elem.addEventListener("mousedown", event => clickDice(elem, myi));
    }
 
-   await newGame(2, 2, -1);
+   await newGame(3, 3, -1);
 }
 
 main();
@@ -96,6 +114,7 @@ async function newGame(D1, D2, newHumanId) {
          rs[p].push(r + 1);
          privs[p].data[r] = 1;
       }
+      rs[p].sort();
    }
    state = new ort.Tensor("float32", new Float32Array(Array(D_PUB).fill(0)));
    state.data[CUR_INDEX] = 1;
@@ -120,9 +139,9 @@ async function newGame(D1, D2, newHumanId) {
    callLeadSpan.appendChild(document.createTextNode("Your call: "));
 
    if (humanId === 0)
-      addStringToHistory("You start!");
+      addStringToHistory("You start...");
    else
-      addStringToHistory("🤖 starts!");
+      addStringToHistory("🤖 Starts...");
 
    if (humanId !== 0) await goRobot();
 }
@@ -172,16 +191,19 @@ async function addStringToHistory(string, class_) {
 }
 
 
-function actionToString(action) {
+function actionToSpan(prefix, action, postfix) {
+   const span = document.createElement("span");
    if (action === N_ACTIONS - 1) {
-      return "lie";
+      span.appendChild(document.createTextNode(prefix + "liar!" + postfix));
    } else {
       const n = Math.floor(action / SIDES) + 1;
       const d = (action % SIDES) + 1;
-      //const unicodeDice = "⚀⚁⚂⚃⚄⚅"[d-1];
-      //return n + " " + unicodeDice;
-      return n + " times " + d;
+
+      span.appendChild(document.createTextNode(prefix + n + " times "));
+      span.appendChild(newDiceIcon(d));
+      span.appendChild(document.createTextNode(postfix));
    }
+   return span
 }
 
 async function submitLie(event) {
@@ -190,7 +212,7 @@ async function submitLie(event) {
    const oldCall = last_call;
    last_call = action;
    lieLink.classList.add('hidden');
-   await addStringToHistory(actionToString(action), 'human-call');
+   await addElementToHistory(actionToSpan("", action, ""), 'human-call');
    endGame(oldCall, false);
 }
 
@@ -225,17 +247,18 @@ async function submit(event) {
    last_call = action;
 
    lieLink.classList.add('hidden');
-   await addStringToHistory(actionToString(action), 'human-call');
+   await addElementToHistory(actionToSpan("", action, ""), 'human-call');
    await goRobot();
 }
 
 async function goRobot() {
-   const reply = await sampleCallFromPolicy();
-   _apply_action(state, reply);
+   const action = await sampleCallFromPolicy();
+   _apply_action(state, action);
    const oldCall = last_call;
-   last_call = reply;
-   await addStringToHistory("🤖: " + actionToString(reply), 'robot-call');
-   if (reply === N_ACTIONS - 1) {
+   last_call = action;
+   const prefix = phrases[Math.floor(Math.random() * phrases.length)];
+   await addElementToHistory(actionToSpan("🤖: "+prefix+" " , action, ""), 'robot-call');
+   if (action === N_ACTIONS - 1) {
       endGame(oldCall, true);
    }
    else {
@@ -262,32 +285,35 @@ function evaluate(call) {
 
 function endGame(call, isRoboCall) {
    const isGood = evaluate(call);
-   addStringToHistory("The call \"" + actionToString(call) + "\" was " + isGood + "!");
+   addElementToHistory(actionToSpan("The call \"", call, "\" was " + isGood + "!"));
 
    const span = document.createElement("span");
    span.appendChild(document.createTextNode("The rolls were "));
    for (let i = 0; i < Ds[0]; i++) {
       span.appendChild(newDiceIcon(rs[0][i]));
-      //span.appendChild(document.createTextNode(" "));
    }
    span.appendChild(document.createTextNode(" and "));
    for (let i = 0; i < Ds[1]; i++) {
       span.appendChild(newDiceIcon(rs[1][i]));
-      //span.appendChild(document.createTextNode(" "));
    }
    addElementToHistory(span);
 
    let newDs = [...Ds];
-   if ((!isRoboCall && isGood) || (isRoboCall && !isGood)) {
-      addStringToHistory("🤖 won!");
+   const robotWon = (!isRoboCall && isGood) || (isRoboCall && !isGood);
+   if (robotWon) {
       newDs[1 - humanId] -= 1;
-   }
-   else {
-      addStringToHistory("You won!");
+   } else {
       newDs[humanId] -= 1;
    }
 
+   // If we continue for more rounds
    if (newDs[0] > 0 && newDs[1] > 0) {
+      if (robotWon) {
+         addStringToHistory("🤖 wins the round!");
+      } else {
+         addStringToHistory("🎉 You win the round!");
+      }
+
       const continueLink = document.createElement("span");
       continueLink.classList.add("link");
       continueLink.appendChild(document.createTextNode("Continue..."));
@@ -296,6 +322,14 @@ function endGame(call, isRoboCall) {
          newGame(newDs[0], newDs[1], humanId);
       });
       addElementToHistory(continueLink);
+   }
+   // Game over
+   else {
+      if (robotWon) {
+         addStringToHistory("🤖 wins the game!");
+      } else {
+         addStringToHistory("🎉 You win the game!");
+      }
    }
 }
 
@@ -318,6 +352,10 @@ function weightedChoice(array, dist) {
 }
 
 async function sampleCallFromPolicy() {
+
+   console.log("State:", [... state.data]);
+   console.log("Private:", [... privs[1-humanId].data]);
+
    const n_actions = N_ACTIONS - last_call - 1;
    const v = await value(state, privs[1 - humanId]);
 
@@ -345,7 +383,7 @@ async function sampleCallFromPolicy() {
       }
    }
 
-   console.log(regrets);
+   console.log("Probabilities:", regrets);
 
    return weightedChoice(actions, regrets);
 }

@@ -132,6 +132,9 @@ input {
    width: 100%;
 }
 
+#roll {
+   font-size: 25px;
+}
 
 #number-input {
    width: 90px;

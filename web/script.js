@@ -113,7 +113,7 @@ async function newGame(D1, D2, newHumanId) {
          const r = Math.floor(Math.random() * SIDES);
          rs[p].push(r + 1);
       }
-      for (let face = 0; face < SIDES; face++) {
+      for (let face = 1; face <= SIDES; face++) {
          let cnt = 0;
          for (let i = 0; i < Ds[p]; i++)
             if (rs[p][i] === face)

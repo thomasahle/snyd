@@ -112,8 +112,17 @@ async function newGame(D1, D2, newHumanId) {
       for (let i = 0; i < Ds[p]; i++) {
          const r = Math.floor(Math.random() * SIDES);
          rs[p].push(r + 1);
-         privs[p].data[r] = 1;
       }
+      for (let face = 0; face < SIDES; face++) {
+         let cnt = 0;
+         for (let i = 0; i < Ds[p]; i++)
+            if (rs[p][i] === face)
+               cnt += 1;
+         for (let i = 0; i < cnt; i++) {
+            privs[p].data[(face-1) * Math.max(D1, D2) + i] = 1
+         }
+      }
+
       rs[p].sort();
    }
    state = new ort.Tensor("float32", new Float32Array(Array(D_PUB).fill(0)));

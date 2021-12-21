@@ -345,7 +345,10 @@ function endGame(call, isRoboCall) {
 // Game functions
 
 function get_cur(state) {
-   return 1 - state.data[CUR_INDEX];
+   const cur = 1 - state.data[CUR_INDEX];
+   if (state.data[CUR_INDEX + D_PUB_PER_PLAYER] !== cur)
+      console.log("Warning: Bad current indicator");
+   return cur;
 }
 
 function _apply_action(state, action) {

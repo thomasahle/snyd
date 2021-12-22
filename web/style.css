@@ -133,7 +133,11 @@ input {
 }
 
 .hand {
-   font-size: 25px;
+   font-size: 35px;
+}
+
+#hands {
+   width: 100%;
 }
 
 .highlight {

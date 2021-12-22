@@ -67,6 +67,7 @@ async function newGame(D1, D2, newHumanId) {
    D_PUB_PER_PLAYER = N_ACTIONS + 1;
    D_PUB = 2 * D_PUB_PER_PLAYER;
 
+   empty(historyDiv);
    if (!(Ds in session)) {
       let path = "./model_" + Ds[0] + "" + Ds[1] + "_joker.onnx";
       console.log("Loading model " + path);
@@ -112,7 +113,6 @@ async function newGame(D1, D2, newHumanId) {
    state = new ort.Tensor("float32", new Float32Array(Array(D_PUB).fill(0)));
    state.data[CUR_INDEX] = 1;
 
-   empty(historyDiv);
    empty(rollSpan);
    empty(robotDiceSpan);
    for (let i = 0; i < Ds[humanId]; i++) {

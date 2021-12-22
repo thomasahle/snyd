@@ -9,33 +9,18 @@
   <body>
      <h1>Liar's Dice 🤖</h1>
     <div class="card elevation">
-      <div class="card">
-         <div>The robot has <span id="robot-dice"></span> secret dice</div>
-         <div>You have <span id="roll"></span></div>
-      </div>
+      <table class="card">
+         <tr><td>Robot hand:</td><td id="robot-dice" class="hand"></td></tr>
+         <tr><td>Your hand:</td><td id="roll" class="hand"></td></tr>
+      </table>
       <div id="history-div">
       </div>
-      <div class="card elevation">
-         <div class='link' id='lie-link'>
+      <div class="card elevation"  style='text-align: center'>
+         <div class='button' id='lie-link'>
             Challenge!
          </div>
-         <div class="card">
-            <span id="call-lead-span"></span>
-            <input type="number" placeholder="How many" min="1" id="number-input"  inputmode="numeric" pattern="\d*"/>
-            times
-         </div>
-         <div style='text-align: center'>
-           <div class="dice-button" id="dice-1"><i class="fas fa-dice-one"></i></div>
-           <div class="dice-button" id="dice-2"><i class="fas fa-dice-two"></i></div>
-           <div class="dice-button" id="dice-3"><i class="fas fa-dice-three"></i></div>
-         </div>
-         <div style='text-align: center'>
-           <div class="dice-button" id="dice-4"><i class="fas fa-dice-four"></i></div>
-           <div class="dice-button" id="dice-5"><i class="fas fa-dice-five"></i></div>
-           <div class="dice-button" id="dice-6"><i class="fas fa-dice-six"></i></div>
-         </div>
-         <div style='text-align: center' class="card">
-            <div class="button" id="submit-button">Submit</div>
+         <div id="call-box">
+            <div class="dice-button" id="dice-0">Liar!</div>
          </div>
       </div>
 
@@ -58,7 +43,7 @@
     <div class="rules">
        About this project: Made by <a href="https://thomasahle.com">Thomas Dybdahl Ahle</a>. See <a href="https://github.com/thomasahle/snyd">source on GitHub</a>.
     </div>
-    <script src="https://use.fontawesome.com/releases/v5.15.4/js/all.js" data-auto-a11y="true" ></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
     <script src="script.js"></script>
   </body>

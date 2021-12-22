@@ -1,12 +1,10 @@
 const historyDiv = document.getElementById("history-div");
-const numberInput = document.getElementById("number-input");
 const newButton = document.getElementById("new-button");
 const sizeInput = document.getElementById("size-input");
-const submitButton = document.getElementById("submit-button");
 const rollSpan = document.getElementById("roll");
 const robotDiceSpan = document.getElementById("robot-dice");
+const callBox = document.getElementById("call-box");
 const lieLink = document.getElementById("lie-link");
-const callLeadSpan = document.getElementById("call-lead-span");
 
 let Ds = [1, 1];
 const SIDES = 6;
@@ -62,14 +60,7 @@ async function value(state, priv) {
 // Load our model.
 async function main() {
    newButton.addEventListener("mousedown", newGameClicked);
-   submitButton.addEventListener("mousedown", submit);
-   lieLink.addEventListener("mousedown", submitLie);
-
-   for (let i = 1; i <= SIDES; i++) {
-      const myi = i;
-      const elem = document.getElementById("dice-"+i);
-      elem.addEventListener("mousedown", event => clickDice(elem, myi));
-   }
+   lieLink.addEventListener("mousedown", () => submit(N_ACTIONS - 1));
 
    await newGame(3, 3, -1);
 }
@@ -138,14 +129,30 @@ async function newGame(D1, D2, newHumanId) {
    empty(robotDiceSpan);
    for (let i = 0; i < Ds[humanId]; i++) {
       rollSpan.appendChild(newDiceIcon(rs[humanId][i]));
-      //rollSpan.appendChild(document.createTextNode(" "));
    }
-   robotDiceSpan.appendChild(document.createTextNode(Ds[1-humanId].toString()));
-   numberInput.setAttribute("max", Ds[0] + Ds[1]);
+   for (let i = 0; i < Ds[1-humanId]; i++) {
+      const elem = document.createElement("i");
+      elem.className = "bi-question-square";
+      elem.classList.add("small-dice");
+      robotDiceSpan.appendChild(elem);
+   }
 
    lieLink.classList.add('hidden');
-   empty(callLeadSpan);
-   callLeadSpan.appendChild(document.createTextNode("Your call: "));
+
+   empty(callBox);
+   for (let i = 1; i <= Ds[0]+Ds[1]; i++) {
+      for (let f = 1; f <= SIDES; f++) {
+         const div = document.createElement("div");
+         div.className = "dice-button";
+         div.appendChild(document.createTextNode(i + " "));
+         div.appendChild(newDiceIcon(f));
+         callBox.appendChild(div);
+         const action = (i - 1) * SIDES + (f - 1);
+         div.id = 'action-' + action;
+         div.addEventListener("mousedown", () => submit(action));
+      }
+   }
+
 
    if (humanId === 0)
       addStringToHistory("You start...");
@@ -165,7 +172,7 @@ function newGameClicked() {
 
 function newDiceIcon(i) {
    const elem = document.createElement("i");
-   elem.className = "fas fa-dice-" + ['one', 'two', 'three', 'four', 'five', 'six'][i-1];
+   elem.className = "bi-dice-" + i;
    elem.classList.add("small-dice");
    return elem;
 }
@@ -215,36 +222,16 @@ function actionToSpan(prefix, action, postfix) {
    return span
 }
 
-async function submitLie(event) {
-   const action = N_ACTIONS - 1;
-   _apply_action(state, action);
-   const oldCall = last_call;
-   last_call = action;
-   lieLink.classList.add('hidden');
-   await addElementToHistory(actionToSpan("", action, ""), 'human-call');
-   endGame(oldCall, false);
-}
-
-async function submit(event) {
-   let action;
-   const n = Number.parseInt(numberInput.value, 10);
-   if (n !== n || n < 1 || n > Ds[0]+Ds[1]) {
-      console.log("Bad n: " + n);
+async function submit(action) {
+   if (action == N_ACTIONS-1) {
+      _apply_action(state, action);
+      const oldCall = last_call;
+      last_call = action;
+      lieLink.classList.add('hidden');
+      await addElementToHistory(actionToSpan("", action, ""), 'human-call');
+      endGame(oldCall, false);
       return;
    }
-
-   let d = 0;
-   for (let i = 1; i <= SIDES; i++) {
-      const elem = document.getElementById("dice-"+i);
-      if (elem.classList.contains('clicked'))
-         d = i;
-   }
-   if (d == 0) {
-      console.log("No die selected");
-      return;
-   }
-
-   action = (n - 1) * SIDES + (d - 1);
 
    if (action <= last_call) {
       console.log("Call is too low");
@@ -253,7 +240,7 @@ async function submit(event) {
 
    _apply_action(state, action);
    const oldCall = last_call;
-   last_call = action;
+   await setLastCall(action);
 
    lieLink.classList.add('hidden');
    await addElementToHistory(actionToSpan("", action, ""), 'human-call');
@@ -264,7 +251,7 @@ async function goRobot() {
    const action = await sampleCallFromPolicy();
    _apply_action(state, action);
    const oldCall = last_call;
-   last_call = action;
+   await setLastCall(action);
    const prefix = phrases[Math.floor(Math.random() * phrases.length)];
    await addElementToHistory(actionToSpan("🤖: "+prefix+" " , action, ""), 'robot-call');
    if (action === N_ACTIONS - 1) {
@@ -272,6 +259,49 @@ async function goRobot() {
    }
    else {
       lieLink.classList.remove('hidden');
+   }
+}
+
+// Only works for the callBox, because I'm lazy
+let currentScrollingDestination;
+function scrollBox(elem, diff, duration) {
+   var startingY = elem.scrollTop;
+   var to = startingY + diff;
+   currentScrollingDestination = to;
+
+   var start;
+   // Bootstrap our animation - it will get called right before next frame shall be rendered.
+   window.requestAnimationFrame(function step(timestamp) {
+      // Somebody else is doing the scrolling now
+      if (currentScrollingDestination !== to) {
+         return;
+      }
+      if (!start) {
+         start = timestamp;
+      }
+      var elapsed = timestamp - start;
+      var percent = Math.min(elapsed / duration, 1);
+      elem.scrollTop = startingY + diff * percent;
+      if (elapsed < duration) {
+         window.requestAnimationFrame(step);
+      }
+   })
+}
+
+async function setLastCall(action) {
+   for (let i = last_call + 1; i <= Math.min(action, N_ACTIONS-2); i++) {
+      const button = document.getElementById("action-"+i);
+      button.classList.add("gray");
+   }
+
+   // Actually update last_call
+   last_call = action;
+
+   // Make sure the next good element is visible, if any are left
+   if (action+1 < N_ACTIONS-1) {
+      const boxRect = callBox.getBoundingClientRect();
+      const buttonRect = document.getElementById("action-"+(action+1)).getBoundingClientRect();
+      scrollBox(callBox, buttonRect.top - boxRect.top, 300);
    }
 }
 

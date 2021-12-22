@@ -360,7 +360,10 @@ function endGame(call, isRoboCall) {
          // We Make it so the loser always starts.
          // This only has the negative side that we'll never get to
          // a 3 vs 2 game, say, where the 2 dice player goes first.
-         newGame(newDs[0], newDs[1], robotWon ? 0 : 1);
+         let newHumanId = robotWon ? 0 : 1;
+         if (newHumanId !== humanId)
+            newDs = [newDs[1], newDs[0]];
+         newGame(newDs[0], newDs[1], newHumanId);
       });
       addElementToHistory(continueLink);
    }

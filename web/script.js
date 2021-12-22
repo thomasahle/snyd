@@ -132,6 +132,8 @@ async function newGame(D1, D2, newHumanId) {
       robotDiceSpan.appendChild(elem);
    }
 
+   callBox.scrollTop = 0;
+
    lieLink.classList.add('hidden');
 
    empty(callBox);

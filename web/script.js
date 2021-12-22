@@ -21,6 +21,8 @@ let humanId = 0;
 let privs = [null, null];
 let state = null;
 
+let MAX_SIZE = 4;
+
 const phrases = [
    "I'll say",
    "Maybe",
@@ -39,19 +41,6 @@ let session = {};
 // Model stuff
 ////////////////////////////////////////////////////////////////////////////////
 
-const modelNames = {};
-modelNames[[1,1]] = "./model_11_joker.onnx";
-
-modelNames[[1,2]] = "./model_12_joker.onnx";
-modelNames[[2,1]] = "./model_21_joker.onnx";
-modelNames[[2,2]] = "./model_22_joker.onnx";
-
-modelNames[[1,3]] = "./model_13_joker.onnx";
-modelNames[[3,1]] = "./model_31_joker.onnx";
-modelNames[[2,3]] = "./model_23_joker.onnx";
-modelNames[[3,2]] = "./model_32_joker.onnx";
-modelNames[[3,3]] = "./model_33_joker.onnx";
-
 async function value(state, priv) {
    const res = await session[Ds].run({ priv: priv, pub: state });
    return res.value.data[0];
@@ -61,6 +50,7 @@ async function value(state, priv) {
 async function main() {
    newButton.addEventListener("mousedown", newGameClicked);
    lieLink.addEventListener("mousedown", () => submit(N_ACTIONS - 1));
+   sizeInput.setAttribute("max", MAX_SIZE);
 
    await newGame(3, 3, -1);
 }
@@ -78,8 +68,11 @@ async function newGame(D1, D2, newHumanId) {
    D_PUB = 2 * D_PUB_PER_PLAYER;
 
    if (!(Ds in session)) {
-      console.log("Loading model " + modelNames[Ds]);
-      session[Ds] = await ort.InferenceSession.create(modelNames[Ds]);
+      let path = "./model_" + Ds[0] + "" + Ds[1] + "_joker.onnx";
+      console.log("Loading model " + path);
+      addStringToHistory("Loading brain...");
+      session[Ds] = await ort.InferenceSession.create(path);
+      empty(historyDiv);
       console.log("Done.");
    }
 
@@ -161,10 +154,11 @@ async function newGame(D1, D2, newHumanId) {
 
 function newGameClicked() {
    const n = Number.parseInt(sizeInput.value, 10);
-   if (n === undefined || n > 2 || n < 1) {
+   if (n === undefined || n > MAX_SIZE || n < 1) {
       console.log("Unsupported size", sizeInput.value);
+   } else {
+      newGame(n, n, -1);
    }
-   newGame(n, n, -1);
 }
 
 function newDiceIcon(i) {

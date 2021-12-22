@@ -119,11 +119,6 @@ async function newGame(D1, D2, newHumanId) {
    state = new ort.Tensor("float32", new Float32Array(Array(D_PUB).fill(0)));
    state.data[CUR_INDEX] = 1;
 
-   function empty(element) {
-      while (element.firstChild)
-         element.removeChild(element.firstChild);
-   }
-
    empty(historyDiv);
    empty(rollSpan);
    empty(robotDiceSpan);
@@ -192,6 +187,11 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function empty(element) {
+   while (element.firstChild)
+      element.removeChild(element.firstChild);
+}
+
 async function addElementToHistory(elem, class_="standard") {
    const para = document.createElement("div");
    para.classList.add("new-call");
@@ -215,7 +215,9 @@ function actionToSpan(prefix, action, postfix) {
       const n = Math.floor(action / SIDES) + 1;
       const d = (action % SIDES) + 1;
 
-      span.appendChild(document.createTextNode(prefix + n + " times "));
+      // Drop the long form "times"
+      //span.appendChild(document.createTextNode(prefix + n + " times "));
+      span.appendChild(document.createTextNode(prefix + n + " "));
       span.appendChild(newDiceIcon(d));
       span.appendChild(document.createTextNode(postfix));
    }
@@ -243,7 +245,7 @@ async function submit(action) {
    await setLastCall(action);
 
    lieLink.classList.add('hidden');
-   await addElementToHistory(actionToSpan("", action, ""), 'human-call');
+   await addElementToHistory(actionToSpan("🐵: ", action, ""), 'human-call');
    await goRobot();
 }
 
@@ -305,10 +307,7 @@ async function setLastCall(action) {
    }
 }
 
-function evaluate(call) {
-   // Returns true if call was true (not the more recent "lie")
-   if (call === -1) return true;
-
+function endGame(call, isRoboCall) {
    const n = Math.floor(call / SIDES) + 1;
    const d = (call % SIDES) + 1;
 
@@ -318,25 +317,19 @@ function evaluate(call) {
          if (rs[p][i] === d || rs[p][i] === 1) actual += 1;
       }
    }
-
-   return actual >= n;
-}
-
-function endGame(call, isRoboCall) {
-   const isGood = evaluate(call);
+   const isGood = actual >= n;
    addElementToHistory(actionToSpan("The call \"", call, "\" was " + isGood + "!"));
+   addElementToHistory(actionToSpan("There were ", (actual-1)*SIDES+d-1, "s in total."));
 
-   const span = document.createElement("span");
-   span.appendChild(document.createTextNode("The rolls were "));
-   for (let i = 0; i < Ds[0]; i++) {
-      span.appendChild(newDiceIcon(rs[0][i]));
+   // Reveal robot dice
+   empty(robotDiceSpan);
+   for (let i = 0; i < Ds[1-humanId]; i++) {
+      robotDiceSpan.appendChild(newDiceIcon(rs[1-humanId][i]));
    }
-   span.appendChild(document.createTextNode(" and "));
-   for (let i = 0; i < Ds[1]; i++) {
-      span.appendChild(newDiceIcon(rs[1][i]));
-   }
-   addElementToHistory(span);
+   document.querySelectorAll("#hands .bi-dice-1, #hands .bi-dice-"+d).forEach(icon => icon.classList.add("highlight"));
 
+
+   // Reduce number of dice for winner
    let newDs = [...Ds];
    const robotWon = (!isRoboCall && isGood) || (isRoboCall && !isGood);
    if (robotWon) {

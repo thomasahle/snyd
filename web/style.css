@@ -136,6 +136,13 @@ input {
    font-size: 25px;
 }
 
+.highlight {
+   background: #8eef8e;
+   border: 2px solid transparent;
+   margin: -2px;
+   border-radius: 10px;
+}
+
 #number-input {
    width: 90px;
    font-size: 14px;

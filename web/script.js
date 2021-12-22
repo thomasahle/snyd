@@ -192,7 +192,7 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function addElementToHistory(elem, class_) {
+async function addElementToHistory(elem, class_="standard") {
    const para = document.createElement("div");
    para.classList.add("new-call");
    para.classList.add(class_);
@@ -357,8 +357,10 @@ function endGame(call, isRoboCall) {
       continueLink.classList.add("link");
       continueLink.appendChild(document.createTextNode("Continue..."));
       continueLink.addEventListener("mousedown", () => {
-         // TODO: Should the loser start?
-         newGame(newDs[0], newDs[1], humanId);
+         // We Make it so the loser always starts.
+         // This only has the negative side that we'll never get to
+         // a 3 vs 2 game, say, where the 2 dice player goes first.
+         newGame(newDs[0], newDs[1], robotWon ? 0 : 1);
       });
       addElementToHistory(continueLink);
    }

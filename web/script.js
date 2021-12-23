@@ -145,7 +145,7 @@ async function newGame(D1, D2, newHumanId) {
 
 
    if (humanId === 0)
-      addStringToHistory("You start...");
+      addStringToHistory("Make your bid!");
    else
       addStringToHistory("The robot starts guessing...");
 

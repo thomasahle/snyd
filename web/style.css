@@ -30,7 +30,7 @@ body {
    }
 }
 
-body > div {
+#main {
    padding-left: 30px !important;
    padding-right: 30px !important;
    height: 85vh;
@@ -66,7 +66,7 @@ body > div {
   text-align: center;
   transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
-  width: 140px;
+  padding: 0 20px;
 }
 
 .dice-button {

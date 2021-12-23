@@ -48,8 +48,8 @@ async function value(state, priv) {
 
 // Load our model.
 async function main() {
-   newButton.addEventListener("mousedown", newGameClicked);
-   lieLink.addEventListener("mousedown", () => submit(N_ACTIONS - 1));
+   newButton.addEventListener("click", newGameClicked);
+   lieLink.addEventListener("click", () => submit(N_ACTIONS - 1));
    sizeInput.setAttribute("max", MAX_SIZE);
 
    await newGame(3, 3, -1);
@@ -139,7 +139,7 @@ async function newGame(D1, D2, newHumanId) {
          callBox.appendChild(div);
          const action = (i - 1) * SIDES + (f - 1);
          div.id = 'action-' + action;
-         div.addEventListener("mousedown", () => submit(action));
+         div.addEventListener("click", () => submit(action));
       }
    }
 
@@ -347,7 +347,7 @@ function endGame(call, isRoboCall) {
       const continueLink = document.createElement("span");
       continueLink.classList.add("link");
       continueLink.appendChild(document.createTextNode("Continue..."));
-      continueLink.addEventListener("mousedown", () => {
+      continueLink.addEventListener("click", () => {
          // We Make it so the loser always starts.
          // This only has the negative side that we'll never get to
          // a 3 vs 2 game, say, where the 2 dice player goes first.

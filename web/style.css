@@ -95,6 +95,7 @@ body > div {
 #call-box {
    height: 200px;
    overflow: scroll;
+   text-align: center;
 }
 
 
@@ -159,7 +160,7 @@ input {
 #history-div {
    margin: 0 0 30px 0;
    flex-grow: 1;
-   overflow: scroll;
+   overflow: auto;
 }
 
 @keyframes append-animate {

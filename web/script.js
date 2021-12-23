@@ -159,7 +159,8 @@ async function newGameClicked() {
    if (n === undefined || n > MAX_SIZE || n < 1) {
       console.log("Unsupported size", sizeInput.value);
    } else {
-      await newGame(n, n, -1);
+      // We swap the player starting every time
+      await newGame(n, n, 1-humanId);
    }
 }
 

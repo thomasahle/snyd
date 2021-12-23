@@ -51,6 +51,10 @@ body {
   padding: 10px;
 }
 
+h1 {
+   padding: 0 10px;
+}
+
 .button {
    display: inline-block;
   background-color: #fff;

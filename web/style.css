@@ -108,7 +108,6 @@ h1 {
   color: blue;
   text-decoration: underline;
   cursor: pointer;
-  text-align: center;
 }
 #lie-link {
   margin: 0 0 10px 0;
@@ -159,6 +158,10 @@ input {
 #history-div {
    flex-grow: 1;
    overflow: auto;
+}
+
+.last-line {
+   text-align: center;
 }
 
 @keyframes append-animate {

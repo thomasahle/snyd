@@ -21,6 +21,7 @@ let humanId = 0;
 let privs = [null, null];
 let state = null;
 
+let DEFAULT_SIZE = 3;
 let MAX_SIZE = 4;
 
 const phrases = [
@@ -51,8 +52,9 @@ async function main() {
    newButton.addEventListener("click", newGameClicked);
    lieLink.addEventListener("click", () => submit(N_ACTIONS - 1));
    sizeInput.setAttribute("max", MAX_SIZE);
+   sizeInput.setAttribute("value", DEFAULT_SIZE);
 
-   await newGame(3, 3, -1);
+   await newGame(DEFAULT_SIZE, DEFAULT_SIZE, -1);
 }
 
 main();
@@ -152,12 +154,12 @@ async function newGame(D1, D2, newHumanId) {
    if (humanId !== 0) await goRobot();
 }
 
-function newGameClicked() {
+async function newGameClicked() {
    const n = Number.parseInt(sizeInput.value, 10);
    if (n === undefined || n > MAX_SIZE || n < 1) {
       console.log("Unsupported size", sizeInput.value);
    } else {
-      newGame(n, n, -1);
+      await newGame(n, n, -1);
    }
 }
 
@@ -344,10 +346,8 @@ function endGame(call, isRoboCall) {
          addStringToHistory("🎉 You win the round!");
       }
 
-      const continueLink = document.createElement("span");
-      continueLink.classList.add("link");
-      continueLink.appendChild(document.createTextNode("Continue..."));
-      continueLink.addEventListener("click", () => {
+      const lastLine = createLastLine("Continue...");
+      lastLine.addEventListener("click", () => {
          // We Make it so the loser always starts.
          // This only has the negative side that we'll never get to
          // a 3 vs 2 game, say, where the 2 dice player goes first.
@@ -356,7 +356,7 @@ function endGame(call, isRoboCall) {
             newDs = [newDs[1], newDs[0]];
          newGame(newDs[0], newDs[1], newHumanId);
       });
-      addElementToHistory(continueLink);
+      addElementToHistory(lastLine);
    }
    // Game over
    else {
@@ -365,7 +365,24 @@ function endGame(call, isRoboCall) {
       } else {
          addStringToHistory("🎉 You win the game!");
       }
+
+      const newGameLine = createLastLine("New Game");
+      newGameLine.addEventListener("click", newGameClicked);
+      addElementToHistory(newGameLine);
    }
+}
+
+function createLastLine(text) {
+   const newGameLine = document.createElement("div");
+   newGameLine.className = "last-line";
+   newGameLine.appendChild(document.createTextNode("🎲 "));
+   const link = document.createElement("span");
+   link.className = "link";
+   link.appendChild(document.createTextNode(text));
+   newGameLine.appendChild(link);
+   // Insert an emsp to balance the emoji in the text centering
+   newGameLine.appendChild(document.createTextNode(" \u2003"));
+   return newGameLine;
 }
 
 // Game functions

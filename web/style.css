@@ -33,6 +33,9 @@ body {
 body > div {
    padding-left: 30px !important;
    padding-right: 30px !important;
+   height: 85vh;
+   display: flex;
+   flex-direction: column;
 }
 
 .elevation {
@@ -155,6 +158,7 @@ input {
 
 #history-div {
    margin: 0 0 30px 0;
+   flex-grow: 1;
    overflow: scroll;
 }
 

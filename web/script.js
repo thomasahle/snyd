@@ -194,6 +194,9 @@ async function addElementToHistory(elem, class_="standard") {
    para.classList.add(class_);
    para.appendChild(elem);
    historyDiv.appendChild(para);
+
+   scrollBox(historyDiv, historyDiv.scrollHeight, 500);
+
    await sleep(500);
 }
 
@@ -260,18 +263,17 @@ async function goRobot() {
    }
 }
 
-// Only works for the callBox, because I'm lazy
-let currentScrollingDestination;
 function scrollBox(elem, diff, duration) {
    var startingY = elem.scrollTop;
    var to = startingY + diff;
-   currentScrollingDestination = to;
+   // Just some monkey patching
+   elem.currentScrollingDestination = to;
 
    var start;
    // Bootstrap our animation - it will get called right before next frame shall be rendered.
    window.requestAnimationFrame(function step(timestamp) {
       // Somebody else is doing the scrolling now
-      if (currentScrollingDestination !== to) {
+      if (elem.currentScrollingDestination !== to) {
          return;
       }
       if (!start) {

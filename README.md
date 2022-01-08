@@ -22,7 +22,7 @@ Note that there is never a non-zero probability for calling "1 ⚀" or 2 of any 
 | 2 	| 0      	| 1      	| 0      	|
 | 3 	| -1/9   	| 1/3    	| 1/9    	|
 | 4 	| -1/8   	| 0      	| 0      	|
-| 5 	| -3/35  	| 0      	| 1/25   	|
+| 5 	| -3/25  	| 0      	| 1/25   	|
 | 6 	| -1/9   	| -7/327 	| 0     	|
 
 In the table above, the rows corespond to the number of sides on the dice of the players.
